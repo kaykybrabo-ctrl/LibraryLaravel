@@ -9,7 +9,7 @@ use Laravel\Sanctum\Sanctum;
 it('creates a loan, prevents duplicate, and allows return', function () {
     $user = User::firstOrCreate(
         ['email' => 'kaue@gmail.com'],
-        ['name' => 'Kaue User', 'password' => Hash::make('123'), 'is_admin' => false]
+        ['name' => 'Kaue', 'password' => Hash::make('123'), 'is_admin' => false]
     );
     Sanctum::actingAs($user);
 

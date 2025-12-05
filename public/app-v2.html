@@ -1162,14 +1162,16 @@
                 }
             },
             goHome() {
-            if (this.currentUser) {
-                if (confirm('Você será deslogado e voltará para a Home. Continuar?')) {
-                    this.logoutAndGoHome();
+                if (this.routePage !== 'books') {
+                    this.goToPage('books');
+                    return;
                 }
-                return;
-            }
-            if (isBrowser) window.location.replace('/');
-    
+                if (confirm('Você já está na página de livros. Deseja recarregar a lista mesmo assim?')) {
+                    this.loadBooks();
+                    if (isBrowser) {
+                        window.scrollTo(0, 0);
+                    }
+                }
             },
             
 

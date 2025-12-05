@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Hash;
 it('logs in an existing user', function () {
     $user = User::firstOrCreate(
         ['email' => 'kaue@gmail.com'],
-        ['name' => 'Kaue User', 'password' => Hash::make('123'), 'is_admin' => false]
+        ['name' => '', 'password' => Hash::make('123'), 'is_admin' => false]
     );
 
     $resp = $this->postJson('/api/login', [

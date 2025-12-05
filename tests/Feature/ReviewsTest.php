@@ -18,7 +18,7 @@ it('prevents admin from creating reviews and allows normal user', function () {
 
     $admin = User::firstOrCreate(
         ['email' => 'kayky@gmail.com'],
-        ['name' => 'Kayky Admin', 'password' => Hash::make('123'), 'is_admin' => true]
+        ['name' => 'Kayky', 'password' => Hash::make('123'), 'is_admin' => true]
     );
     Sanctum::actingAs($admin);
     $adminTry = $this->postJson('/api/reviews', ['book_id' => $book->id, 'rating' => 5]);
@@ -26,7 +26,7 @@ it('prevents admin from creating reviews and allows normal user', function () {
 
     $user = User::firstOrCreate(
         ['email' => 'kaue@gmail.com'],
-        ['name' => 'Kaue User', 'password' => Hash::make('123'), 'is_admin' => false]
+        ['name' => 'Kaue', 'password' => Hash::make('123'), 'is_admin' => false]
     );
     Sanctum::actingAs($user);
     $userTry = $this->postJson('/api/reviews', ['book_id' => $book->id, 'rating' => 5, 'comment' => 'Nice']);
@@ -47,7 +47,7 @@ it('validates rating between 1 and 5', function () {
     ]);
     $user = User::firstOrCreate(
         ['email' => 'kaue@gmail.com'],
-        ['name' => 'Kaue User', 'password' => Hash::make('123'), 'is_admin' => false]
+        ['name' => 'Kaue', 'password' => Hash::make('123'), 'is_admin' => false]
     );
     Sanctum::actingAs($user);
 

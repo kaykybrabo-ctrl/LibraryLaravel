@@ -8,7 +8,7 @@ use Laravel\Sanctum\Sanctum;
 it('admin can create, update and delete books', function () {
     $admin = User::firstOrCreate(
         ['email' => 'kayky@gmail.com'],
-        ['name' => 'Kayky Admin', 'password' => Hash::make('123'), 'is_admin' => true]
+        ['name' => 'Kayky', 'password' => Hash::make('123'), 'is_admin' => true]
     );
     Sanctum::actingAs($admin);
 
