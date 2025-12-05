@@ -26,7 +26,7 @@ Route::get('/app', function () {
     ]);
 });
 
-// Image proxy for Cloudinary to avoid cross-site image blocking in some browsers
+
 Route::get('/img', function (Request $request) {
     $url = $request->query('url');
     if (!$url) {
@@ -36,7 +36,7 @@ Route::get('/img', function (Request $request) {
         return response('Forbidden', 403);
     }
     try {
-        $maxBytes = 10 * 1024 * 1024; // 10MB
+        $maxBytes = 10 * 1024 * 1024; 
         $resp = Http::withHeaders([
             'Accept' => 'image/*',
             'User-Agent' => 'PedBook/1.0'

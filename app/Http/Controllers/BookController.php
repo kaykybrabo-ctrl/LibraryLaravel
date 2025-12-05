@@ -4,8 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use App\Jobs\RebuildBooksCacheJob;
 use App\Services\BookService;
 use App\Http\Requests\BookRequest;
 use App\Http\Resources\BookResource;

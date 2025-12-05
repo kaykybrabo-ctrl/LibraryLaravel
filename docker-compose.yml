@@ -19,7 +19,7 @@ services:
       - REDIS_CLIENT=phpredis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - ALWAYS_FRESH=false
+      - ALWAYS_FRESH=true
     restart: unless-stopped
 
   redis:

@@ -12,10 +12,6 @@ class FavoriteController extends Controller
     public function showByUser($userId)
     {
         try {
-            $user = request()->user();
-            if ($user && (int)$user->id !== (int)$userId) {
-                return response()->json(['message' => 'Forbidden'], 403);
-            }
             $fav = Favorite::where('user_id', $userId)->first();
             if (!$fav) {
                 return response()->json(null);
