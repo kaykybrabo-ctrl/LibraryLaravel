@@ -1,0 +1,53 @@
+services:
+  app:
+    container_name: library_laravel_app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/app
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=1
+      - APP_URL=http://localhost:8080
+      - DB_CONNECTION=sqlite
+      - DB_DATABASE=/app/database/database.sqlite
+      - CACHE_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+      - REDIS_CLIENT=phpredis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ALWAYS_FRESH=true
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: library_laravel_redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  queue:
+    container_name: library_laravel_queue
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - redis
+    volumes:
+      - ./:/app
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=1
+      - APP_URL=http://localhost:8080
+      - DB_CONNECTION=sqlite
+      - DB_DATABASE=/app/database/database.sqlite
+      - CACHE_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+      - REDIS_CLIENT=phpredis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: sh -lc "php artisan queue:work --verbose --tries=1 --timeout=90"
+    restart: unless-stopped
