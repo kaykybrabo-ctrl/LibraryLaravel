@@ -66,6 +66,10 @@ type Mutation {
     deleteReview(id: ID!): MessagePayload @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@deleteReview")
 
     updateProfile(input: UpdateProfileInput!): User @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@updateProfile")
+
+    uploadImage(target: String!, filename: String!, fileData: String!): String!
+        @guard(with: ["api"])
+        @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@uploadImage")
 }
 
 type Author {

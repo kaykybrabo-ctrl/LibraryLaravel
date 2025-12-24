@@ -12,6 +12,7 @@ use App\Services\BookService;
 use App\Services\AuthorService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Http;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class LibraryMutation
@@ -355,6 +356,105 @@ class LibraryMutation
         $review->delete();
 
         return ['message' => 'Review deleted'];
+    }
+
+    public function uploadImage($rootValue, array $args): string
+    {
+        $user = auth('api')->user();
+
+        if (!$user) {
+            throw new \Exception('Unauthorized');
+        }
+
+        $target = strtolower((string) ($args['target'] ?? ''));
+        $filename = (string) ($args['filename'] ?? '');
+        $fileData = (string) ($args['fileData'] ?? '');
+
+        if ($target === '' || $filename === '' || $fileData === '') {
+            throw new \Exception('Missing image data');
+        }
+
+        if (!in_array($target, ['book', 'author', 'profile'], true)) {
+            throw new \Exception('Invalid target');
+        }
+
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+        if ($ext === '' || !in_array($ext, $allowed, true)) {
+            throw new \Exception('Only image files are allowed');
+        }
+
+        $base64 = $fileData;
+        $mime = null;
+
+        if (str_starts_with($fileData, 'data:image/')) {
+            $commaPos = strpos($fileData, ',');
+            if ($commaPos === false) {
+                throw new \Exception('Invalid image data');
+            }
+
+            $header = substr($fileData, 0, $commaPos);
+            $base64 = substr($fileData, $commaPos + 1);
+
+            if (preg_match('#^data:(image/[^;]+);base64$#', $header, $m)) {
+                $mime = $m[1];
+            }
+        }
+
+        if ($mime === null) {
+            $extForMime = $ext === 'jpg' ? 'jpeg' : $ext;
+            $mime = 'image/' . $extForMime;
+        }
+
+        $binary = base64_decode($base64, true);
+
+        if ($binary === false) {
+            throw new \Exception('Invalid base64 image data');
+        }
+
+        $folder = $target === 'book' ? 'pedbook/books' : 'pedbook/profiles';
+
+        $nameOnly = pathinfo($filename, PATHINFO_FILENAME);
+        if ($nameOnly === '') {
+            $nameOnly = 'image';
+        }
+        $safeName = preg_replace('/[^a-zA-Z0-9_-]+/', '_', $nameOnly);
+        if ($safeName === '' || $safeName === '_') {
+            $safeName = 'image';
+        }
+        $uploadName = $safeName . '.' . $ext;
+
+        try {
+            $resp = Http::attach('file', $binary, $uploadName)
+                ->post(
+                    'https://api.cloudinary.com/v1_1/ddfgsoh5g/image/upload',
+                    [
+                        'upload_preset' => 'pedbook_unsigned',
+                        'folder' => $folder,
+                    ]
+                );
+        } catch (\Throwable $e) {
+            throw new \Exception('Cloudinary upload request failed');
+        }
+
+        if (!$resp->ok()) {
+            $json = $resp->json();
+            $msg = is_array($json) && isset($json['error']['message'])
+                ? $json['error']['message']
+                : 'Upload failed';
+
+            throw new \Exception('Cloudinary error: ' . $msg);
+        }
+
+        $json = $resp->json();
+        $publicId = is_array($json) ? ($json['public_id'] ?? null) : null;
+
+        if (!$publicId) {
+            throw new \Exception('Invalid Cloudinary response');
+        }
+
+        return (string) $publicId;
     }
 
     public function updateProfile($rootValue, array $args): User

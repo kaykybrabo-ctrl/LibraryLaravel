@@ -201,7 +201,7 @@
             <div v-if="routePage === 'books'" class="container">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h2>📖 Livros</h2>
-                    <button v-if="currentUser && currentUser.is_admin" class="btn btn-small" @click="showCreateBookModal = true">➕ Adicionar Livro</button>
+                    <button v-if="currentUser && currentUser.is_admin" class="btn btn-small" @click="openCreateBookModal">➕ Adicionar Livro</button>
                 </div>
                 <div v-if="!currentUser" style="margin-bottom: 10px;">
                     <button class="btn btn-small btn-secondary" @click="goToLanding">← Voltar para Home</button>
@@ -720,13 +720,14 @@
         </footer>
         
         
-        <div class="modal" :class="{ active: showCreateBookModal }" @click.self="showCreateBookModal = false">
+        <div class="modal" :class="{ active: showCreateBookModal }" @click.self="closeCreateBookModal">
             <div class="modal-content">
                 <div class="modal-header">
                     <h3>Adicionar Novo Livro</h3>
-                    <button class="modal-close" @click="showCreateBookModal = false">✕</button>
+                    <button class="modal-close" @click="closeCreateBookModal">✕</button>
                 </div>
                 <div class="modal-body">
+                    <div v-if="newBookError" class="error" style="margin-bottom:10px;">{{ newBookError }}</div>
                     <form @submit.prevent="createBook" class="modal-form">
                         <div class="form-group">
                             <label>Título:</label>
@@ -738,18 +739,18 @@
                             <div class="modal-section-helper">Escolha um autor existente ou cadastre um novo para este livro.</div>
                             <div style="margin-bottom: 10px; font-size: 0.9rem; display:flex; flex-wrap:wrap; gap:12px;">
                                 <label>
-                                    <input type="radio" value="existing" v-model="newBookAuthorMode">
+                                    <input type="radio" value="existing" v-model="newBookAuthorMode" @change="newBookError = ''">
                                     Selecionar autor existente
                                 </label>
                                 <label>
-                                    <input type="radio" value="new" v-model="newBookAuthorMode">
+                                    <input type="radio" value="new" v-model="newBookAuthorMode" @change="newBookError = ''">
                                     Criar novo autor junto com o livro
                                 </label>
                             </div>
                             <div v-if="newBookAuthorMode === 'existing'">
                                 <div class="form-group" style="margin-bottom: 0;">
                                     <label>Autor existente:</label>
-                                    <select v-model="newBook.author_id">
+                                    <select v-model="newBook.author_id" @change="newBookError = ''">
                                         <option value="">Selecione um autor</option>
                                         <option v-for="author in authors" :key="author.id" :value="author.id">{{ author.name }}</option>
                                     </select>
@@ -758,7 +759,7 @@
                             <div v-else>
                                 <div class="form-group">
                                     <label>Nome do autor:</label>
-                                    <input type="text" v-model="newAuthor.name">
+                                    <input type="text" v-model="newAuthor.name" @input="newBookError = ''">
                                 </div>
                                 <div class="form-group">
                                     <label>Biografia do autor:</label>
@@ -914,6 +915,7 @@
                 },
 
                 newBookAuthorMode: 'existing',
+                newBookError: '',
 
                 editBook: {
                     id: '',
@@ -1088,15 +1090,12 @@
                 if (!url) return '';
                 try {
                     if (url.startsWith('http')) {
-                        if (url.includes('res.cloudinary.com/ddfgsoh5g/')) {
-                            return `/api/img?url=${encodeURIComponent(url)}`;
-                        }
                         return url;
                     }
 
                     if (url.startsWith('pedbook/')) {
                         const full = `https://res.cloudinary.com/ddfgsoh5g/image/upload/${url}`;
-                        return `/api/img?url=${encodeURIComponent(full)}`;
+                        return full;
                     }
                     return url;
                 } catch (e) {
@@ -1110,16 +1109,16 @@
                     const trans = `f_auto,q_auto,c_fill,g_auto,w_${w},h_${h}`;
                     if (!url) {
                         const def = `${basePublic}/${trans}/pedbook/books/default-book`;
-                        return `/api/img?url=${encodeURIComponent(def)}`;
+                        return def;
                     }
                     if (url.startsWith('http') && url.includes('/image/upload/')) {
                         const after = url.split('/image/upload/')[1];
                         const full = `${basePublic}/${trans}/${after}`;
-                        return `/api/img?url=${encodeURIComponent(full)}`;
+                        return full;
                     }
                     if (url.startsWith('pedbook/')) {
                         const full = `${basePublic}/${trans}/${url}`;
-                        return `/api/img?url=${encodeURIComponent(full)}`;
+                        return full;
                     }
                     return this.imgProxy(url);
                 } catch (e) { return this.imgProxy(url); }
@@ -1539,9 +1538,21 @@
                 if (isBrowser) window.location.hash = `author/${author.id}`;
             },
             
+            openCreateBookModal() {
+                this.newBookError = '';
+                this.errorMessage = '';
+                this.showCreateBookModal = true;
+            },
+
+            closeCreateBookModal() {
+                this.showCreateBookModal = false;
+                this.newBookError = '';
+            },
 
             async createBook() {
                 try {
+                    this.newBookError = '';
+
                     const payload = {
                         title: this.newBook.title,
                         description: this.newBook.description || '',
@@ -1550,13 +1561,13 @@
 
                     if (this.newBookAuthorMode === 'existing') {
                         if (!this.newBook.author_id) {
-                            this.errorMessage = 'Selecione um autor para o livro.';
+                            this.newBookError = 'Selecione um autor para o livro.';
                             return;
                         }
                         payload.author_id = parseInt(this.newBook.author_id);
                     } else {
                         if (!this.newAuthor.name) {
-                            this.errorMessage = 'Informe o nome do novo autor.';
+                            this.newBookError = 'Informe o nome do novo autor.';
                             return;
                         }
                         payload.author_name = this.newAuthor.name;
@@ -1574,6 +1585,8 @@
                     this.newBook = { title: '', author_id: '', description: '', photo: '' };
                     this.newBookAuthorMode = 'existing';
                     this.newAuthor = { name: '', bio: '', photo: '' };
+                    this.newBookError = '';
+                    this.errorMessage = '';
                 } catch (error) {
                     console.error('Erro ao criar livro:', error);
                     this.errorMessage = '❌ Não foi possível adicionar o livro. Tente novamente.';
@@ -1603,51 +1616,47 @@
                     input.type = 'file';
                     input.accept = 'image/*';
 
-                    input.onchange = async (e) => {
+                    input.onchange = (e) => {
                         const file = e.target.files && e.target.files[0];
                         if (!file) return;
 
-                        const isBook = target === 'book' || target === 'book_edit';
-                        const isAuthor = target === 'author' || target === 'author_edit';
-                        const isProfile = target === 'profile';
-                        const folder = isBook ? 'pedbook/books' : 'pedbook/profiles';
+                        const reader = new FileReader();
+                        reader.onload = async () => {
+                            const fileData = reader.result;
+                            if (!fileData) return;
 
-                        const form = new FormData();
-                        form.append('file', file);
-                        form.append('upload_preset', 'pedbook_unsigned');
-                        form.append('folder', folder);
+                            const isBook = target === 'book' || target === 'book_edit';
+                            const isAuthor = target === 'author' || target === 'author_edit';
+                            const isProfile = target === 'profile';
+                            const uploadTarget = isBook ? 'book' : (isAuthor ? 'author' : 'profile');
 
-                        try {
-                            const res = await fetch('https://api.cloudinary.com/v1_1/ddfgsoh5g/image/upload', {
-                                method: 'POST',
-                                body: form
-                            });
-                            let data = null;
                             try {
-                                data = await res.json();
-                            } catch (_) {}
-                            if (!res.ok) {
-                                const msg = data && data.error && data.error.message ? data.error.message : `HTTP ${res.status}`;
-                                alert('Erro ao enviar imagem: ' + msg);
-                                return;
-                            }
-                            const publicId = data && data.public_id ? data.public_id : '';
-                            if (!publicId) return;
+                                const data = await this.graphql(
+                                    'mutation UploadImage($target: String!, $filename: String!, $fileData: String!) { uploadImage(target: $target, filename: $filename, fileData: $fileData) }',
+                                    { target: uploadTarget, filename: file.name, fileData }
+                                );
+                                const publicId = data && data.uploadImage ? data.uploadImage : '';
+                                if (!publicId) return;
 
-                            if (target === 'book') this.newBook.photo = publicId;
-                            if (target === 'author') this.newAuthor.photo = publicId;
-                            if (target === 'book_edit') this.editBook.photo = publicId;
-                            if (target === 'author_edit') this.editAuthor.photo = publicId;
-                            if (isProfile || target === 'profile') {
-                                this.profileFormPhoto = publicId;
-                                if (this.currentUser) {
-                                    await this.saveProfile();
+                                if (target === 'book') this.newBook.photo = publicId;
+                                if (target === 'author') this.newAuthor.photo = publicId;
+                                if (target === 'book_edit') this.editBook.photo = publicId;
+                                if (target === 'author_edit') this.editAuthor.photo = publicId;
+                                if (isProfile || target === 'profile') {
+                                    this.profileFormPhoto = publicId;
+                                    if (this.currentUser) {
+                                        await this.saveProfile();
+                                    }
                                 }
+                            } catch (err) {
+                                console.error('uploadImage error', err);
+                                alert('Não foi possível enviar a imagem.');
                             }
-                        } catch (err) {
-                            console.error('cloudinary upload error', err);
-                            alert('Não foi possível enviar a imagem.');
-                        }
+                        };
+                        reader.onerror = () => {
+                            alert('Não foi possível ler o arquivo.');
+                        };
+                        reader.readAsDataURL(file);
                     };
 
                     input.click();
