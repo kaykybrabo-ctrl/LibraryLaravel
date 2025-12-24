@@ -10,6 +10,7 @@ use App\Models\Favorite;
 use App\Models\Review;
 use App\Services\BookService;
 use App\Services\AuthorService;
+use App\Jobs\SendBookDueNotification;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
@@ -70,7 +71,7 @@ class LibraryMutation
         $user = User::where('email', $data['email'])->first();
 
         if (!$user || !Hash::check($data['password'], $user->password)) {
-            throw new \Exception('Invalid credentials');
+            throw new \Exception('Credenciais inválidas.');
         }
 
         $token = JWTAuth::fromUser($user);
@@ -98,7 +99,7 @@ class LibraryMutation
         $user = auth('api')->user();
 
         if (!$user || !$user->is_admin) {
-            throw new \Exception('Forbidden');
+            throw new \Exception('Acesso não permitido.');
         }
 
         return $user;
@@ -167,11 +168,11 @@ class LibraryMutation
         $user = auth('api')->user();
 
         if (!$user) {
-            throw new \Exception('Unauthorized');
+            throw new \Exception('Não autorizado.');
         }
 
         if (!empty($user->is_admin)) {
-            throw new \Exception('Admins cannot rent books');
+            throw new \Exception('Administradores não podem alugar livros.');
         }
 
         $input = $args['input'] ?? [];
@@ -190,7 +191,7 @@ class LibraryMutation
         $data = $validator->validated();
 
         if ((int) $data['user_id'] !== (int) $user->id) {
-            throw new \Exception('Invalid user for this loan');
+            throw new \Exception('Usuário inválido para este empréstimo.');
         }
 
         $activeExists = Loan::where('book_id', $data['book_id'])
@@ -198,10 +199,12 @@ class LibraryMutation
             ->exists();
 
         if ($activeExists) {
-            throw new \Exception('Book is already rented');
+            throw new \Exception('Livro já está alugado.');
         }
 
         $loan = Loan::create($data);
+
+        SendBookDueNotification::dispatch($loan->id);
 
         return $loan->load(['book.author', 'user']);
     }
@@ -211,14 +214,14 @@ class LibraryMutation
         $user = auth('api')->user();
 
         if (!$user) {
-            throw new \Exception('Unauthorized');
+            throw new \Exception('Não autorizado.');
         }
 
         $id = (int) ($args['id'] ?? 0);
         $loan = Loan::findOrFail($id);
 
         if (!$user->is_admin && (int) $loan->user_id !== (int) $user->id) {
-            throw new \Exception('Forbidden');
+            throw new \Exception('Acesso não permitido.');
         }
 
         $loan->update(['returned_at' => now()]);
@@ -231,7 +234,7 @@ class LibraryMutation
         $user = auth('api')->user();
 
         if (!$user || !$user->is_admin) {
-            throw new \Exception('Forbidden');
+            throw new \Exception('Acesso não permitido.');
         }
 
         $id = (int) ($args['id'] ?? 0);
@@ -250,7 +253,7 @@ class LibraryMutation
         }
 
         if (!empty($user->is_admin)) {
-            throw new \Exception('Admins cannot favorite books');
+            throw new \Exception('Administradores não podem favoritar livros.');
         }
 
         $input = $args['input'] ?? [];
@@ -267,7 +270,7 @@ class LibraryMutation
         $data = $validator->validated();
 
         if ((int) $data['user_id'] !== (int) $user->id) {
-            throw new \Exception('Forbidden');
+            throw new \Exception('Acesso não permitido.');
         }
 
         $existing = Favorite::where('user_id', $data['user_id'])->first();
@@ -295,7 +298,7 @@ class LibraryMutation
         $userId = (int) ($args['user_id'] ?? 0);
 
         if ((int) $user->id !== $userId && !$user->is_admin) {
-            throw new \Exception('Forbidden');
+            throw new \Exception('Acesso não permitido.');
         }
 
         Favorite::where('user_id', $userId)->delete();
@@ -312,7 +315,7 @@ class LibraryMutation
         }
 
         if (!empty($user->is_admin)) {
-            throw new \Exception('Admins cannot leave reviews');
+            throw new \Exception('Administradores não podem deixar avaliações.');
         }
 
         $input = $args['input'] ?? [];
@@ -350,7 +353,7 @@ class LibraryMutation
         $review = Review::findOrFail($id);
 
         if ((int) $review->user_id !== (int) $user->id && !$user->is_admin) {
-            throw new \Exception('Forbidden');
+            throw new \Exception('Acesso não permitido.');
         }
 
         $review->delete();
@@ -371,18 +374,18 @@ class LibraryMutation
         $fileData = (string) ($args['fileData'] ?? '');
 
         if ($target === '' || $filename === '' || $fileData === '') {
-            throw new \Exception('Missing image data');
+            throw new \Exception('Dados da imagem ausentes.');
         }
 
         if (!in_array($target, ['book', 'author', 'profile'], true)) {
-            throw new \Exception('Invalid target');
+            throw new \Exception('Destino de upload inválido.');
         }
 
         $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
         $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
         if ($ext === '' || !in_array($ext, $allowed, true)) {
-            throw new \Exception('Only image files are allowed');
+            throw new \Exception('Apenas arquivos de imagem são permitidos.');
         }
 
         $base64 = $fileData;
@@ -391,7 +394,7 @@ class LibraryMutation
         if (str_starts_with($fileData, 'data:image/')) {
             $commaPos = strpos($fileData, ',');
             if ($commaPos === false) {
-                throw new \Exception('Invalid image data');
+                throw new \Exception('Dados de imagem inválidos.');
             }
 
             $header = substr($fileData, 0, $commaPos);
@@ -410,7 +413,7 @@ class LibraryMutation
         $binary = base64_decode($base64, true);
 
         if ($binary === false) {
-            throw new \Exception('Invalid base64 image data');
+            throw new \Exception('Dados de imagem em base64 inválidos.');
         }
 
         $folder = $target === 'book' ? 'pedbook/books' : 'pedbook/profiles';
@@ -435,23 +438,23 @@ class LibraryMutation
                     ]
                 );
         } catch (\Throwable $e) {
-            throw new \Exception('Cloudinary upload request failed');
+            throw new \Exception('Falha ao enviar a imagem para o Cloudinary.');
         }
 
         if (!$resp->ok()) {
             $json = $resp->json();
             $msg = is_array($json) && isset($json['error']['message'])
                 ? $json['error']['message']
-                : 'Upload failed';
+                : 'Falha no upload.';
 
-            throw new \Exception('Cloudinary error: ' . $msg);
+            throw new \Exception('Erro do Cloudinary: ' . $msg);
         }
 
         $json = $resp->json();
         $publicId = is_array($json) ? ($json['public_id'] ?? null) : null;
 
         if (!$publicId) {
-            throw new \Exception('Invalid Cloudinary response');
+            throw new \Exception('Resposta inválida do Cloudinary.');
         }
 
         return (string) $publicId;

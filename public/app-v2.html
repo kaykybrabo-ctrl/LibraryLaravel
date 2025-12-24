@@ -143,6 +143,7 @@
 
         
         <div v-if="errorMessage" class="toast toast-error">{{ errorMessage }}</div>
+        <div v-if="successMessage" class="toast toast-success">{{ successMessage }}</div>
 
         
         <div v-if="routePage === 'login'" class="login-page">
@@ -536,6 +537,12 @@
                                     >
                                         📚 Ativo
                                     </span>
+                                    <div
+                                        v-if="typeof loan.days_remaining === 'number' && !isNaN(loan.days_remaining)"
+                                        style="font-size:0.8rem; color:#666; margin-top:4px;"
+                                    >
+                                        {{ loan.days_remaining >= 0 ? (loan.days_remaining + ' dia(s) restante(s)') : (Math.abs(loan.days_remaining) + ' dia(s) em atraso') }}
+                                    </div>
                                     <div style="display:flex; gap:8px;">
                                         <button
                                             v-if="!loan.returned_at"
@@ -1398,6 +1405,8 @@
                     );
 
                     await this.loadUserData();
+                    this.successMessage = '✅ Livro alugado com sucesso.';
+                    this.errorMessage = '';
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível alugar o livro.';
                 }
@@ -1417,6 +1426,8 @@
                     } else {
                         await this.loadUserData();
                     }
+                    this.successMessage = '✅ Livro devolvido com sucesso.';
+                    this.errorMessage = '';
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível devolver o livro.';
                 }
@@ -1587,6 +1598,7 @@
                     this.newAuthor = { name: '', bio: '', photo: '' };
                     this.newBookError = '';
                     this.errorMessage = '';
+                    this.successMessage = '✅ Livro criado com sucesso.';
                 } catch (error) {
                     console.error('Erro ao criar livro:', error);
                     this.errorMessage = '❌ Não foi possível adicionar o livro. Tente novamente.';
@@ -1604,6 +1616,8 @@
                     await this.loadAuthors();
                     this.showCreateAuthorModal = false;
                     this.newAuthor = { name: '', bio: '', photo: '' };
+                    this.successMessage = '✅ Autor criado com sucesso.';
+                    this.errorMessage = '';
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível adicionar o autor.';
                 }
@@ -1681,6 +1695,8 @@
                     this.currentUser = updated;
                     if (isBrowser) localStorage.setItem('currentUser', JSON.stringify(updated));
                     this.editingProfile = false;
+                    this.successMessage = '✅ Perfil atualizado com sucesso.';
+                    this.errorMessage = '';
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível salvar o perfil.';
                 }
@@ -1732,6 +1748,8 @@
                         { id }
                     );
                     await this.loadBooks();
+                    this.successMessage = '✅ Livro excluído com sucesso.';
+                    this.errorMessage = '';
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível excluir o livro.';
                 }
@@ -1770,6 +1788,8 @@
                         { id }
                     );
                     await this.loadAuthors();
+                    this.successMessage = '✅ Autor excluído com sucesso.';
+                    this.errorMessage = '';
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível excluir o autor.';
                 }
@@ -1836,6 +1856,8 @@
                         { id }
                     );
                     await this.loadAllLoans();
+                    this.successMessage = '✅ Empréstimo excluído com sucesso.';
+                    this.errorMessage = '';
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível excluir o empréstimo.';
                 }
@@ -1868,6 +1890,8 @@
                     );
                     this.myReviewRating = 0; this.myReviewComment = ''; this.hoverRating = 0; this.editingReviewId = null;
                     await this.loadReviews(this.selectedBook.id);
+                    this.successMessage = '✅ Avaliação salva com sucesso.';
+                    this.errorMessage = '';
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível salvar sua avaliação.';
                 }
@@ -1891,6 +1915,8 @@
                         { id }
                     );
                     await this.loadReviews(this.selectedBook.id);
+                    this.successMessage = '✅ Avaliação excluída com sucesso.';
+                    this.errorMessage = '';
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível excluir a avaliação.';
                 }
@@ -1997,6 +2023,20 @@
                 if (val) {
                     this.profileFormName = val.name || '';
                     this.profileFormPhoto = val.photo || '';
+                }
+            },
+            errorMessage(val) {
+                if (val && typeof val === 'string' && val.trim() && isBrowser) {
+                    setTimeout(() => {
+                        if (this.errorMessage === val) this.errorMessage = '';
+                    }, 5000);
+                }
+            },
+            successMessage(val) {
+                if (val && typeof val === 'string' && val.trim() && isBrowser) {
+                    setTimeout(() => {
+                        if (this.successMessage === val) this.successMessage = '';
+                    }, 4000);
                 }
             }
         },
