@@ -1,0 +1,181 @@
+"A datetime string with format `Y-m-d H:i:s`, e.g. `2018-05-23 13:43:32`."
+scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+
+"Indicates what fields are available at the top level of a query operation."
+type Query {
+    books(all: Boolean, per_page: Int): [Book!]! @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@books")
+    book(id: ID!): Book @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@book")
+    authors: [Author!]! @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@authors")
+    author(id: ID!): Author @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@author")
+    users(per_page: Int): [User!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@users")
+    me: User @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@me")
+    loans: [Loan!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@loans")
+    userLoans(user_id: ID!): [Loan!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@userLoans")
+    activeBookIds: [ID!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@activeBookIds")
+    favoriteBookByUser(user_id: ID!): Book @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@favoriteBookByUser")
+    reviewsByBook(book_id: ID!): [Review!]! @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@reviewsByBook")
+}
+
+"Account of a person who uses this application."
+type User {
+    "Unique primary key."
+    id: ID!
+
+    "Non-unique name."
+    name: String!
+
+    "Unique email address."
+    email: String!
+
+    is_admin: Boolean
+    photo: String
+
+    "When the email was verified."
+    email_verified_at: DateTime
+
+    "When the account was created."
+    created_at: DateTime!
+
+    "When the account was last updated."
+    updated_at: DateTime!
+}
+
+ 
+
+type Mutation {
+    register(input: RegisterInput!): AuthPayload @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@register")
+    login(input: LoginInput!): AuthPayload @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@login")
+    logout: MessagePayload @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@logout")
+
+    createBook(input: CreateBookInput!): Book @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@createBook")
+    updateBook(id: ID!, input: UpdateBookInput!): Book @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@updateBook")
+    deleteBook(id: ID!): MessagePayload @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@deleteBook")
+
+    createAuthor(input: CreateAuthorInput!): Author @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@createAuthor")
+    updateAuthor(id: ID!, input: UpdateAuthorInput!): Author @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@updateAuthor")
+    deleteAuthor(id: ID!): MessagePayload @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@deleteAuthor")
+
+    rentBook(input: RentBookInput!): Loan @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@rentBook")
+    returnBook(id: ID!): Loan @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@returnBook")
+    deleteLoan(id: ID!): MessagePayload @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@deleteLoan")
+
+    toggleFavorite(input: ToggleFavoriteInput!): Book @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@toggleFavorite")
+    removeFavorite(user_id: ID!): MessagePayload @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@removeFavorite")
+
+    upsertReview(input: ReviewInput!): Review @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@upsertReview")
+    deleteReview(id: ID!): MessagePayload @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@deleteReview")
+
+    updateProfile(input: UpdateProfileInput!): User @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@updateProfile")
+}
+
+type Author {
+    id: ID!
+    name: String!
+    bio: String
+    photo: String
+    books: [Book!]! @hasMany
+}
+
+type Book {
+    id: ID!
+    title: String!
+    description: String
+    photo: String
+    author: Author! @belongsTo
+}
+
+type Loan {
+    id: ID!
+    user_id: ID!
+    book_id: ID!
+    loan_date: String
+    return_date: String
+    returned_at: String
+    status: String
+    is_overdue: Boolean
+    days_remaining: Int
+    user: User! @belongsTo
+    book: Book! @belongsTo
+}
+
+type Review {
+    id: ID!
+    user_id: ID!
+    book_id: ID!
+    rating: Int!
+    comment: String
+    user: User! @belongsTo
+    book: Book! @belongsTo
+}
+
+type MessagePayload {
+    message: String!
+}
+
+type AuthPayload {
+    user: User!
+    token: String!
+}
+
+input RegisterInput {
+    name: String!
+    email: String!
+    password: String!
+}
+
+input LoginInput {
+    email: String!
+    password: String!
+}
+
+input CreateBookInput {
+    title: String!
+    description: String
+    photo: String
+    author_id: ID
+    author_name: String
+    author_bio: String
+    author_photo: String
+}
+
+input UpdateBookInput {
+    title: String!
+    description: String
+    photo: String
+    author_id: ID!
+}
+
+input CreateAuthorInput {
+    name: String!
+    bio: String
+    photo: String
+}
+
+input UpdateAuthorInput {
+    name: String!
+    bio: String
+    photo: String
+}
+
+input RentBookInput {
+    user_id: ID!
+    book_id: ID!
+    loan_date: String!
+    return_date: String!
+}
+
+input ToggleFavoriteInput {
+    user_id: ID!
+    book_id: ID!
+}
+
+input ReviewInput {
+    book_id: ID!
+    rating: Int!
+    comment: String
+}
+
+input UpdateProfileInput {
+    name: String!
+    photo: String
+}

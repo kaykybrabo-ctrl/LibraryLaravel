@@ -1069,6 +1069,21 @@
                 return this.authToken ? { 'Authorization': `Bearer ${this.authToken}` } : {};
             },
 
+            async graphql(query, variables = {}) {
+                const headers = { 'Content-Type': 'application/json', ...this.authHeaders() };
+                const res = await fetch('/graphql', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ query, variables })
+                });
+                const payload = await res.json();
+                if (!res.ok || (payload && payload.errors && payload.errors.length)) {
+                    const msg = payload && payload.errors && payload.errors[0] && payload.errors[0].message ? payload.errors[0].message : 'GraphQL error';
+                    throw new Error(msg);
+                }
+                return payload && payload.data ? payload.data : {};
+            },
+
             imgProxy(url) {
                 if (!url) return '';
                 try {
@@ -1160,15 +1175,23 @@
                     this.selectedUserFavoriteBook = null;
                 } catch (e) {}
                 try {
-                    fetch(`/api/loans/user/${user.id}`, { headers: this.authHeaders() })
-                        .then(res => res.ok ? res.json() : [])
-                        .then(list => { this.selectedUserLoans = Array.isArray(list) ? list : []; })
+                    this.graphql(
+                        'query UserLoans($userId: ID!) { userLoans(user_id: $userId) { id loan_date return_date returned_at status is_overdue days_remaining book { id title author { id name } } } }',
+                        { userId: user.id }
+                    )
+                        .then(data => {
+                            const list = data && Array.isArray(data.userLoans) ? data.userLoans : [];
+                            this.selectedUserLoans = list;
+                        })
                         .catch(() => {});
                 } catch (e) {}
                 try {
-                    fetch(`/api/favorites/user/${user.id}`, { headers: this.authHeaders() })
-                        .then(res => res.ok ? res.json() : null)
-                        .then(book => {
+                    this.graphql(
+                        'query FavoriteByUser($userId: ID!) { favoriteBookByUser(user_id: $userId) { id title description photo author { id name } } }',
+                        { userId: user.id }
+                    )
+                        .then(data => {
+                            const book = data && data.favoriteBookByUser ? data.favoriteBookByUser : null;
                             this.selectedUserFavoriteBook = (book && book.id) ? book : null;
                         })
                         .catch(() => {});
@@ -1207,15 +1230,14 @@
             async handleLogin() {
                 try {
                     this.errorMessage = '';
-                    const res = await fetch('/api/login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: this.loginEmail, password: this.loginPassword })
-                    });
-                    if (!res.ok) throw new Error('Credenciais inválidas');
-                    const data = await res.json();
-                    this.currentUser = data.user;
-                    this.authToken = data.token || '';
+                    const data = await this.graphql(
+                        'mutation Login($input: LoginInput!) { login(input: $input) { user { id name email is_admin photo } token } }',
+                        { input: { email: this.loginEmail, password: this.loginPassword } }
+                    );
+                    const payload = data && data.login;
+                    if (!payload || !payload.user) throw new Error('Credenciais inválidas');
+                    this.currentUser = payload.user;
+                    this.authToken = payload.token || '';
                     if (isBrowser) {
                         localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
                         if (this.authToken) localStorage.setItem('authToken', this.authToken);
@@ -1233,16 +1255,15 @@
             async handleRegister() {
                 try {
                     this.errorMessage = '';
-                    const res = await fetch('/api/register', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name: this.registerName, email: this.registerEmail, password: this.registerPassword })
-                    });
-                    if (!res.ok) throw new Error('Falha no registro');
-                    const data = await res.json();
+                    const data = await this.graphql(
+                        'mutation Register($input: RegisterInput!) { register(input: $input) { user { id name email is_admin photo } token } }',
+                        { input: { name: this.registerName, email: this.registerEmail, password: this.registerPassword } }
+                    );
+                    const payload = data && data.register;
+                    if (!payload || !payload.user) throw new Error('Falha no registro');
 
-                    this.currentUser = data.user;
-                    this.authToken = data.token || '';
+                    this.currentUser = payload.user;
+                    this.authToken = payload.token || '';
                     if (isBrowser) {
                         localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
                         if (this.authToken) localStorage.setItem('authToken', this.authToken);
@@ -1264,7 +1285,7 @@
             logoutAndGoHome() {
                 try {
                     if (this.authToken) {
-                        fetch('/api/logout', { method: 'POST', headers: this.authHeaders() }).catch(() => {});
+                        this.graphql('mutation { logout { message } }').catch(() => {});
                     }
                 } catch (e) {}
                 this.currentUser = null;
@@ -1279,7 +1300,7 @@
             
             logout() {
                 if (this.authToken) {
-                    fetch('/api/logout', { method: 'POST', headers: this.authHeaders() }).catch(() => {});
+                    this.graphql('mutation { logout { message } }').catch(() => {});
                 }
                 this.currentUser = null;
                 this.authToken = '';
@@ -1294,14 +1315,13 @@
             async loadBooks() {
                 try {
                     this.loading = true;
-                    const res = await fetch('/api/books?all=1');
-                    if (!res.ok) throw new Error('Falha ao buscar livros');
-                    const data = await res.json();
-                    this.books = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+                    const data = await this.graphql('query Books($all: Boolean) { books(all: $all) { id title description photo author { id name bio photo } } }', { all: true });
+                    const list = data && Array.isArray(data.books) ? data.books : [];
+                    this.books = list;
                     this.totalItems = this.books.length;
                 } catch (error) {
                     console.error('Erro ao carregar livros:', error);
-                    this.errorMessage = '❌ Não foi possível carregar os livros. Tente novamente.';
+                    this.errorMessage = ' Não foi possível carregar os livros. Tente novamente.';
                 } finally {
                     this.loading = false;
                 }
@@ -1310,8 +1330,11 @@
             async viewBook(book) {
                 try {
                     if (!book?.author) {
-                        const res = await fetch(`/api/books/${book.id}`);
-                        if (res.ok) book = await res.json();
+                        const data = await this.graphql(
+                            'query Book($id: ID!) { book(id: $id) { id title description photo author { id name bio photo } } }',
+                            { id: book.id }
+                        );
+                        if (data && data.book) book = data.book;
                     }
                 } catch {}
                 this.selectedBook = book;
@@ -1370,14 +1393,10 @@
                         alert('Você já alugou este livro!');
                         return;
                     }
-                    const loan_date = new Date();
-                    const return_date = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
-                    const res = await fetch('/api/loans', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
-                        body: JSON.stringify({ user_id: this.currentUser.id, book_id: book.id, loan_date: sd, return_date: ed })
-                    });
-                    if (!res.ok) throw new Error('Falha ao criar empréstimo');
+                    await this.graphql(
+                        'mutation RentBook($input: RentBookInput!) { rentBook(input: $input) { id } }',
+                        { input: { user_id: this.currentUser.id, book_id: book.id, loan_date: sd, return_date: ed } }
+                    );
 
                     await this.loadUserData();
                 } catch (e) {
@@ -1389,8 +1408,10 @@
 
             async returnBook(loanId) {
                 try {
-                    const res = await fetch(`/api/loans/${loanId}/return`, { method: 'PUT', headers: this.authHeaders() });
-                    if (!res.ok) throw new Error('Falha ao devolver');
+                    await this.graphql(
+                        'mutation ReturnBook($id: ID!) { returnBook(id: $id) { id } }',
+                        { id: loanId }
+                    );
                     if (this.routePage === 'loans' && this.currentUser?.is_admin) {
                         await this.loadAllLoans();
                         await this.loadUserData();
@@ -1455,17 +1476,17 @@
                 }
                 try {
                     if (this.isFavorite(book.id)) {
-                        const del = await fetch(`/api/favorites/user/${this.currentUser.id}`, { method: 'DELETE', headers: this.authHeaders() });
-                        if (!del.ok) throw new Error('Falha ao remover favorito');
+                        await this.graphql(
+                            'mutation RemoveFavorite($userId: ID!) { removeFavorite(user_id: $userId) { message } }',
+                            { userId: this.currentUser.id }
+                        );
                         this.userFavoriteBook = null;
                     } else {
-                        const res = await fetch('/api/favorites', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
-                            body: JSON.stringify({ user_id: this.currentUser.id, book_id: book.id })
-                        });
-                        if (!res.ok) throw new Error('Falha ao salvar favorito');
-                        this.userFavoriteBook = await res.json();
+                        const data = await this.graphql(
+                            'mutation ToggleFavorite($input: ToggleFavoriteInput!) { toggleFavorite(input: $input) { id title description photo author { id name } } }',
+                            { input: { user_id: this.currentUser.id, book_id: book.id } }
+                        );
+                        this.userFavoriteBook = data && data.toggleFavorite ? data.toggleFavorite : null;
                     }
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível atualizar favorito.';
@@ -1475,8 +1496,10 @@
             async removeFavorite() {
                 if (!this.currentUser || !this.userFavoriteBook) return;
                 try {
-                    const del = await fetch(`/api/favorites/user/${this.currentUser.id}`, { method: 'DELETE', headers: this.authHeaders() });
-                    if (!del.ok) throw new Error('Falha ao remover');
+                    await this.graphql(
+                        'mutation RemoveFavorite($userId: ID!) { removeFavorite(user_id: $userId) { message } }',
+                        { userId: this.currentUser.id }
+                    );
                     this.userFavoriteBook = null;
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível remover dos favoritos.';
@@ -1491,10 +1514,9 @@
             async loadAuthors() {
                 try {
                     this.authorsLoading = true;
-                    const res = await fetch('/api/authors');
-                    if (!res.ok) throw new Error('Falha ao buscar autores');
-                    const data = await res.json();
-                    this.authors = Array.isArray(data) ? data : [];
+                    const data = await this.graphql('query Authors { authors { id name bio photo books { id title description photo } } }');
+                    const list = data && Array.isArray(data.authors) ? data.authors : [];
+                    this.authors = list;
                 } catch (e) {
                     this.authors = [];
                     this.errorMessage = '❌ Não foi possível carregar autores. Tente novamente.';
@@ -1505,8 +1527,11 @@
             async selectAuthor(author) {
                 try {
                     if (!author?.books || author.books.length === 0) {
-                        const res = await fetch(`/api/authors/${author.id}`);
-                        if (res.ok) author = await res.json();
+                        const data = await this.graphql(
+                            'query Author($id: ID!) { author(id: $id) { id name bio photo books { id title description photo } } }',
+                            { id: author.id }
+                        );
+                        if (data && data.author) author = data.author;
                     }
                 } catch {}
                 this.selectedAuthor = author;
@@ -1539,12 +1564,10 @@
                         payload.author_photo = this.newAuthor.photo || '';
                     }
 
-                    const res = await fetch('/api/books', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
-                        body: JSON.stringify(payload)
-                    });
-                    if (!res.ok) throw new Error('Falha ao criar livro');
+                    await this.graphql(
+                        'mutation CreateBook($input: CreateBookInput!) { createBook(input: $input) { id } }',
+                        { input: payload }
+                    );
                     await this.loadBooks();
                     await this.loadAuthors();
                     this.showCreateBookModal = false;
@@ -1561,12 +1584,10 @@
             async createAuthor() {
                 try {
                     const payload = { name: this.newAuthor.name, bio: this.newAuthor.bio || '', photo: this.newAuthor.photo || '' };
-                    const res = await fetch('/api/authors', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
-                        body: JSON.stringify(payload)
-                    });
-                    if (!res.ok) throw new Error('Falha ao criar autor');
+                    await this.graphql(
+                        'mutation CreateAuthor($input: CreateAuthorInput!) { createAuthor(input: $input) { id } }',
+                        { input: payload }
+                    );
                     await this.loadAuthors();
                     this.showCreateAuthorModal = false;
                     this.newAuthor = { name: '', bio: '', photo: '' };
@@ -1643,13 +1664,11 @@
                         name: this.profileFormName,
                         photo: this.profileFormPhoto || (this.currentUser && this.currentUser.photo) || ''
                     };
-                    const res = await fetch(`/api/users/${this.currentUser.id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
-                        body: JSON.stringify(payload)
-                    });
-                    if (!res.ok) throw new Error('Falha ao salvar perfil');
-                    const updated = await res.json();
+                    const data = await this.graphql(
+                        'mutation UpdateProfile($input: UpdateProfileInput!) { updateProfile(input: $input) { id name email is_admin photo } }',
+                        { input: payload }
+                    );
+                    const updated = data && data.updateProfile ? data.updateProfile : this.currentUser;
                     this.currentUser = updated;
                     if (isBrowser) localStorage.setItem('currentUser', JSON.stringify(updated));
                     this.editingProfile = false;
@@ -1684,17 +1703,14 @@
                         author_id: parseInt(this.editBook.author_id),
                         photo: this.editBook.photo
                     };
-                    const res = await fetch(`/api/books/${this.editBook.id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
-                        body: JSON.stringify(payload)
-                    });
-                    if (!res.ok) throw new Error('Falha ao atualizar livro');
+                    const data = await this.graphql(
+                        'mutation UpdateBook($id: ID!, $input: UpdateBookInput!) { updateBook(id: $id, input: $input) { id title description photo author { id name bio photo } } }',
+                        { id: this.editBook.id, input: payload }
+                    );
                     this.showEditBookModal = false;
                     await this.loadBooks();
                     if (this.selectedBook && this.selectedBook.id === this.editBook.id) {
-                        const b = await (await fetch(`/api/books/${this.editBook.id}`)).json();
-                        this.selectedBook = b;
+                        this.selectedBook = data && data.updateBook ? data.updateBook : this.selectedBook;
                     }
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível atualizar o livro.';
@@ -1702,8 +1718,10 @@
             },
             async deleteBook(id) {
                 try {
-                    const res = await fetch(`/api/books/${id}`, { method: 'DELETE', headers: this.authHeaders() });
-                    if (!res.ok) throw new Error('Falha ao excluir livro');
+                    await this.graphql(
+                        'mutation DeleteBook($id: ID!) { deleteBook(id: $id) { message } }',
+                        { id }
+                    );
                     await this.loadBooks();
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível excluir o livro.';
@@ -1723,17 +1741,14 @@
             async saveEditAuthor() {
                 try {
                     const payload = { name: this.editAuthor.name, bio: this.editAuthor.bio, photo: this.editAuthor.photo };
-                    const res = await fetch(`/api/authors/${this.editAuthor.id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', ...this.authHeaders() },
-                        body: JSON.stringify(payload)
-                    });
-                    if (!res.ok) throw new Error('Falha ao atualizar autor');
+                    const data = await this.graphql(
+                        'mutation UpdateAuthor($id: ID!, $input: UpdateAuthorInput!) { updateAuthor(id: $id, input: $input) { id name bio photo } }',
+                        { id: this.editAuthor.id, input: payload }
+                    );
                     this.showEditAuthorModal = false;
                     await this.loadAuthors();
                     if (this.selectedAuthor && this.selectedAuthor.id === this.editAuthor.id) {
-                        const a = await (await fetch(`/api/authors/${this.editAuthor.id}`)).json();
-                        this.selectedAuthor = a;
+                        this.selectedAuthor = data && data.updateAuthor ? data.updateAuthor : this.selectedAuthor;
                     }
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível atualizar o autor.';
@@ -1741,8 +1756,10 @@
             },
             async deleteAuthor(id) {
                 try {
-                    const res = await fetch(`/api/authors/${id}`, { method: 'DELETE', headers: this.authHeaders() });
-                    if (!res.ok) throw new Error('Falha ao excluir autor');
+                    await this.graphql(
+                        'mutation DeleteAuthor($id: ID!) { deleteAuthor(id: $id) { message } }',
+                        { id }
+                    );
                     await this.loadAuthors();
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível excluir o autor.';
@@ -1753,10 +1770,12 @@
             async loadUsers() {
                 try {
                     this.usersLoading = true;
-                    const res = await fetch('/api/users?per_page=100', { headers: this.authHeaders() });
-                    if (!res.ok) throw new Error('Falha ao buscar usuários');
-                    const ud = await res.json();
-                    this.users = Array.isArray(ud) ? ud : (Array.isArray(ud?.data) ? ud.data : []);
+                    const data = await this.graphql(
+                        'query Users($per: Int) { users(per_page: $per) { id name email is_admin photo } }',
+                        { per: 100 }
+                    );
+                    const list = data && Array.isArray(data.users) ? data.users : [];
+                    this.users = list;
                 } catch (e) {
                     this.users = [];
                 } finally {
@@ -1790,9 +1809,11 @@
             async loadAllLoans() {
                 try {
                     this.allLoansLoading = true;
-                    const res = await fetch('/api/loans', { headers: this.authHeaders() });
-                    if (!res.ok) throw new Error('Falha ao buscar empréstimos');
-                    this.allLoans = await res.json();
+                    const data = await this.graphql(
+                        'query Loans { loans { id user_id book_id loan_date return_date returned_at status is_overdue days_remaining user { id name email is_admin photo } book { id title author { id name } } } }'
+                    );
+                    const list = data && Array.isArray(data.loans) ? data.loans : [];
+                    this.allLoans = list;
                 } catch (e) {
                     this.allLoans = [];
                 } finally {
@@ -1801,8 +1822,10 @@
             },
             async deleteLoan(id) {
                 try {
-                    const res = await fetch(`/api/loans/${id}`, { method: 'DELETE', headers: this.authHeaders() });
-                    if (!res.ok) throw new Error('Falha ao excluir');
+                    await this.graphql(
+                        'mutation DeleteLoan($id: ID!) { deleteLoan(id: $id) { message } }',
+                        { id }
+                    );
                     await this.loadAllLoans();
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível excluir o empréstimo.';
@@ -1812,12 +1835,12 @@
 
             async loadReviews(bookId) {
                 try {
-                    const res = await fetch(`/api/reviews/book/${bookId}`);
-                    if (res.ok) {
-                        this.reviews = await res.json();
-                    } else {
-                        this.reviews = [];
-                    }
+                    const data = await this.graphql(
+                        'query Reviews($bookId: ID!) { reviewsByBook(book_id: $bookId) { id user_id book_id rating comment user { id name } } }',
+                        { bookId }
+                    );
+                    const list = data && Array.isArray(data.reviewsByBook) ? data.reviewsByBook : [];
+                    this.reviews = list;
                 } catch (e) {
                     this.reviews = [];
                 }
@@ -1829,9 +1852,11 @@
                     return;
                 }
                 try {
-                    const payload = { user_id: this.currentUser.id, book_id: this.selectedBook.id, rating: this.myReviewRating, comment: this.myReviewComment };
-                    const res = await fetch('/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json', ...this.authHeaders() }, body: JSON.stringify(payload) });
-                    if (!res.ok) throw new Error('Erro ao salvar review');
+                    const payload = { book_id: this.selectedBook.id, rating: this.myReviewRating, comment: this.myReviewComment };
+                    await this.graphql(
+                        'mutation UpsertReview($input: ReviewInput!) { upsertReview(input: $input) { id rating comment user { id name } } }',
+                        { input: payload }
+                    );
                     this.myReviewRating = 0; this.myReviewComment = ''; this.hoverRating = 0; this.editingReviewId = null;
                     await this.loadReviews(this.selectedBook.id);
                 } catch (e) {
@@ -1852,8 +1877,10 @@
             },
             async deleteReview(id) {
                 try {
-                    const res = await fetch(`/api/reviews/${id}`, { method: 'DELETE', headers: this.authHeaders() });
-                    if (!res.ok) throw new Error('Falha ao excluir review');
+                    await this.graphql(
+                        'mutation DeleteReview($id: ID!) { deleteReview(id: $id) { message } }',
+                        { id }
+                    );
                     await this.loadReviews(this.selectedBook.id);
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível excluir a avaliação.';
@@ -1864,21 +1891,25 @@
             async loadUserData() {
                 if (!this.currentUser) return;
                 try {
-                    const loansRes = await fetch(`/api/loans/user/${this.currentUser.id}`, { headers: this.authHeaders() });
-                    if (loansRes.ok) this.userLoans = await loansRes.json(); else this.userLoans = [];
+                    const dataLoans = await this.graphql(
+                        'query UserLoansMe($userId: ID!) { userLoans(user_id: $userId) { id loan_date return_date returned_at status is_overdue days_remaining book { id title author { id name } } } }',
+                        { userId: this.currentUser.id }
+                    );
+                    const listLoans = dataLoans && Array.isArray(dataLoans.userLoans) ? dataLoans.userLoans : [];
+                    this.userLoans = listLoans;
                 } catch (e) { this.userLoans = []; }
                 try {
-                    const favRes = await fetch(`/api/favorites/user/${this.currentUser.id}`, { headers: this.authHeaders() });
-                    if (favRes.ok) {
-                        const fav = await favRes.json();
-                        this.userFavoriteBook = (fav && fav.id) ? fav : null;
-                    } else {
-                        this.userFavoriteBook = null;
-                    }
+                    const dataFav = await this.graphql(
+                        'query FavoriteMe($userId: ID!) { favoriteBookByUser(user_id: $userId) { id title description photo author { id name } } }',
+                        { userId: this.currentUser.id }
+                    );
+                    const fav = dataFav && dataFav.favoriteBookByUser ? dataFav.favoriteBookByUser : null;
+                    this.userFavoriteBook = (fav && fav.id) ? fav : null;
                 } catch (e) { this.userFavoriteBook = null; }
                 try {
-                    const availRes = await fetch('/api/loans/active-book-ids', { headers: this.authHeaders() });
-                    if (availRes.ok) this.activeBookIds = await availRes.json(); else this.activeBookIds = [];
+                    const dataIds = await this.graphql('query ActiveBookIds { activeBookIds }');
+                    const ids = dataIds && Array.isArray(dataIds.activeBookIds) ? dataIds.activeBookIds : [];
+                    this.activeBookIds = ids;
                 } catch (e) { this.activeBookIds = []; }
             },
 
@@ -1916,10 +1947,12 @@
                     const id = parseInt(hash.split('/')[1]);
                     if (id) {
                         try {
-                            const res = await fetch(`/api/books/${id}`);
-                            if (res.ok) {
-                                const b = await res.json();
-                                this.viewBook(b);
+                            const data = await this.graphql(
+                                'query Book($id: ID!) { book(id: $id) { id title description photo author { id name bio photo } } }',
+                                { id }
+                            );
+                            if (data && data.book) {
+                                this.viewBook(data.book);
                             }
                         } catch {}
                     }
@@ -1929,10 +1962,12 @@
                     const id = parseInt(hash.split('/')[1]);
                     if (id) {
                         try {
-                            const res = await fetch(`/api/authors/${id}`);
-                            if (res.ok) {
-                                const a = await res.json();
-                                this.selectAuthor(a);
+                            const data = await this.graphql(
+                                'query Author($id: ID!) { author(id: $id) { id name bio photo books { id title description photo } } }',
+                                { id }
+                            );
+                            if (data && data.author) {
+                                this.selectAuthor(data.author);
                             }
                         } catch {}
                     }

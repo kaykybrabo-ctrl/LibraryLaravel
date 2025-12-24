@@ -7,6 +7,7 @@
     "require": {
         "php": "^8.2",
         "laravel/framework": "^11.0",
+        "nuwave/lighthouse": "*",
         "php-open-source-saver/jwt-auth": "*"
     },
     "require-dev": {

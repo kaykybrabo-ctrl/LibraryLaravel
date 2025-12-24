@@ -180,8 +180,17 @@
             methods: {
                 async loadBooks() {
                     try {
-                        const res = await fetch('/api/books?all=1');
-                        const books = await res.json();
+                        const res = await fetch('/graphql', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                query: 'query Books($all: Boolean) { books(all: $all) { id title description photo author { id name } } }',
+                                variables: { all: true }
+                            })
+                        });
+                        const payload = await res.json();
+                        const data = payload && payload.data ? payload.data : {};
+                        const books = data && Array.isArray(data.books) ? data.books : [];
                         this.featuredBooks = books.slice(0, 6);
                     } catch (error) {
                         console.error('Erro ao carregar livros:', error);
