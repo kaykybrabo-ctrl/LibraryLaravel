@@ -23,7 +23,7 @@
         <div class="modal" :class="{ active: showEditBookModal }" @click.self="showEditBookModal = false">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>Editar Livro</h3>
+                    <h3 style="color:#162c74; font-weight:600;">Editar Livro</h3>
                     <button class="modal-close" @click="showEditBookModal = false">✕</button>
                 </div>
                 <div class="modal-body">
@@ -43,6 +43,10 @@
                             <textarea v-model="editBook.description" rows="4" required></textarea>
                         </div>
                         <div class="form-group">
+                            <label>Preço (R$):</label>
+                            <input type="number" step="0.01" min="0" v-model.number="editBook.price">
+                        </div>
+                        <div class="form-group">
                             <label>Foto (URL ou Cloudinary publicId):</label>
                             <input type="text" v-model="editBook.photo" required>
                             <div class="mt-3">
@@ -51,6 +55,31 @@
                         </div>
                         <button type="submit" class="btn btn-primary">Salvar</button>
                     </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal" :class="{ active: showPixModal }" @click.self="closePixModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 style="color:#162c74; font-weight:600;">Pagamento PIX Simulado</h3>
+                    <button class="modal-close" @click="closePixModal">✕</button>
+                </div>
+                <div class="modal-body">
+                    <p style="margin-bottom:10px; color:#162c74; font-weight:600;">Valor a pagar: {{ pixAmountFormatted }}</p>
+                    <p style="margin-bottom:8px; color:#555; font-size:0.9rem;">
+                        Use o código fictício abaixo como se fosse um PIX para simular o pagamento. Após "pagar", clique em <strong>Confirmar pagamento</strong> para concluir a compra.
+                    </p>
+                    <div style="background:#111827; color:#f9fafb; padding:10px; border-radius:6px; font-family:monospace; word-break:break-all; margin-bottom:10px;">
+                        {{ pixCode }}
+                    </div>
+                    <p style="color:#777; font-size:0.85rem;">
+                        Este é um ambiente de testes. Nenhum pagamento real é realizado.
+                    </p>
+                    <div style="display:flex; gap:8px; margin-top:12px;">
+                        <button class="btn btn-primary" @click="confirmPixPayment">Confirmar pagamento</button>
+                        <button class="btn btn-secondary" @click="closePixModal">Cancelar</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -68,6 +97,9 @@
                         <div class="form-group">
                             <label>Data de devolução:</label>
                             <input type="date" v-model="rentReturnDate" :min="minEndDate" :max="maxDate2030" required>
+                            <p v-if="rentReturnDate" style="margin-top:4px; font-size:0.85rem; color:#666;">
+                                Data escolhida: {{ formatDate(rentReturnDate) }}
+                            </p>
                         </div>
                         <div style="display:flex; gap:10px; margin-top:10px;">
                             <button class="btn btn-small" @click="confirmRent">Confirmar Aluguel</button>
@@ -117,7 +149,9 @@
                             <button class="dropdown-item" @click="goToPage('authors'); showDropdown = false">✍️ Autores</button>
                             <button class="dropdown-item" v-if="currentUser" @click="goToPage('users'); showDropdown = false">👥 Usuários</button>
                             <button class="dropdown-item" v-if="currentUser && !currentUser.is_admin" @click="goToPage('my-loans'); showDropdown = false">📚 Meus Empréstimos</button>
+                            <button class="dropdown-item" v-if="currentUser && !currentUser.is_admin" @click="goToPage('cart'); showDropdown = false">🛒 Carrinho ({{ cartCount }})</button>
                             <button class="dropdown-item" v-if="currentUser && currentUser.is_admin" @click="goToPage('loans'); showDropdown = false">📋 Empréstimos</button>
+                            <button class="dropdown-item" v-if="currentUser && currentUser.is_admin" @click="goToPage('sales'); showDropdown = false">💰 Vendas</button>
                             <button class="dropdown-item" @click="goToPage('profile'); showDropdown = false">👤 Meu Perfil</button>
                             <button class="dropdown-logout" @click="logout">🚪 Sair</button>
                         </div>
@@ -161,17 +195,11 @@
                             <label>Senha:</label>
                             <input type="password" v-model="loginPassword" required>
                         </div>
-                        <button type="submit" class="btn">Entrar</button>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 4px;">Entrar</button>
                     </form>
                     <p class="text-center mt-2"><a href="#" @click.prevent="openResetRequest">Esqueceu a senha?</a></p>
                     <p class="text-center mt-3">Não tem conta? <a href="#" @click.prevent="showRegister = true">Criar conta</a></p>
                     <button class="btn btn-secondary" style="margin-top: 10px; width: 100%;" @click="goToLanding">← Voltar para Home</button>
-                    
-                    <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                        <h3 style="font-size: 1.1rem; margin-bottom: 10px; color: #162c74;">Credenciais de Teste:</h3>
-                        <p style="margin-bottom: 5px;">👤 Admin: kayky@gmail.com / 123</p>
-                        <p>👤 Usuário: kaue@gmail.com / 123</p>
-                    </div>
                 </div>
 
                 <div v-else-if="showResetForm">
@@ -183,7 +211,7 @@
                             <label>Email cadastrado:</label>
                             <input type="email" v-model="forgotEmail" required>
                         </div>
-                        <button type="submit" class="btn">Enviar link de redefinição</button>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 4px;">Enviar link de redefinição</button>
                     </form>
 
                     <form v-else @submit.prevent="handleResetPassword">
@@ -198,7 +226,7 @@
                             <label>Confirmar nova senha:</label>
                             <input type="password" v-model="resetNewPasswordConfirm" required>
                         </div>
-                        <button type="submit" class="btn">Salvar nova senha</button>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 4px;">Salvar nova senha</button>
                     </form>
 
                     <p class="text-center mt-3"><a href="#" @click.prevent="closeResetForm">Voltar para login</a></p>
@@ -220,7 +248,7 @@
                             <label>Senha:</label>
                             <input type="password" v-model="registerPassword" required>
                         </div>
-                        <button type="submit" class="btn">Criar Conta</button>
+                        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 4px;">Criar Conta</button>
                     </form>
                     <p class="text-center mt-3">Já tem conta? <a href="#" @click.prevent="showRegister = false">Entrar</a></p>
                     <button class="btn btn-secondary" style="margin-top: 10px; width: 100%;" @click="goToLanding">← Voltar para Home</button>
@@ -279,15 +307,21 @@
                                     <span v-else>Autor Desconhecido</span>
                                 </p>
                                 <p class="book-desc">{{ book.description || 'Sem descrição disponível.' }}</p>
+                                <p style="margin-top:6px; font-weight:600; color:#162c74;">
+                                    {{ 'R$ ' + getBookPrice(book).toFixed(2).replace('.', ',') }}
+                                </p>
                                 <div v-if="currentUser && !currentUser.is_admin" style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
                                     <button class="btn btn-small" :disabled="isBookUnavailable(book.id) && !isBookBorrowedByMe(book.id)" @click.stop="isBookBorrowedByMe(book.id) ? promptReturn(book.id) : openRentModal(book)">
                                         {{ isBookBorrowedByMe(book.id) ? '🔄 Devolver' : (isBookUnavailable(book.id) ? 'Indisponível' : 'Alugar') }}
                                     </button>
                                     <small v-if="isBookBorrowedByMe(book.id)" style="font-size:0.8rem; color:#16a34a;">✅ Você está com este livro emprestado</small>
                                     <small v-else-if="isBookUnavailable(book.id)" style="font-size:0.8rem; color:#b91c1c;">⚠️ Alugado por outro usuário</small>
+                                    <button class="btn btn-small btn-secondary" @click.stop="addToCart(book)">
+                                        🛒 Adicionar ao carrinho
+                                    </button>
                                 </div>
                                 <div v-else style="margin-top: 10px;">
-                                    <button v-if="!currentUser" class="btn btn-small" @click.stop="goToPage('login')">🔐 Faça login para alugar</button>
+                                    <button v-if="!currentUser" class="btn btn-small" @click.stop="goToPage('login')">🔐 Faça login para alugar ou comprar</button>
                                     <div v-else-if="currentUser && currentUser.is_admin" style="padding:8px 0; color:#555; font-size:0.9rem;">👨‍💼 Administradores não podem alugar ou favoritar livros</div>
                                 </div>
                                 <div v-if="currentUser && currentUser.is_admin" style="margin-top:10px; display:flex; gap:8px;">
@@ -502,6 +536,58 @@
                 </div>
             </div>
 
+            <div v-if="routePage === 'sales' && currentUser && currentUser.is_admin" class="container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>💰 Vendas (Pedidos)</h2>
+                </div>
+                <div v-if="adminOrdersLoading" class="text-center">Carregando vendas...</div>
+                <div v-else>
+                    <div v-if="adminOrders && adminOrders.length > 0">
+                        <div
+                            v-for="order in adminOrders"
+                            :key="order.id"
+                            style="padding: 12px 16px; background: white; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); border: 1px solid #e5e7eb;"
+                        >
+                            <div style="display:flex; justify-content: space-between; align-items:flex-start; gap:12px;">
+                                <div>
+                                    <div style="font-weight:600; color:#162c74; font-size:0.98rem;">
+                                        Pedido #{{ order.id }}
+                                    </div>
+                                    <div style="color:#666; font-size:0.9rem; margin-top:4px;">
+                                        <span v-if="order.user">
+                                            Cliente: {{ order.user.name }} ({{ order.user.email }})
+                                        </span>
+                                    </div>
+                                    <div style="color:#666; font-size:0.85rem; margin-top:4px;">
+                                        Data: {{ formatDate(order.created_at) }}
+                                    </div>
+                                </div>
+                                <div style="text-align:right; min-width:140px;">
+                                    <div style="font-size:0.9rem; color:#555;">
+                                        Status: {{ formatOrderStatus(order.status) }}
+                                    </div>
+                                    <div style="font-size:1rem; font-weight:600; color:#162c74; margin-top:4px;">
+                                        Total: {{ 'R$ ' + Number(order.total || 0).toFixed(2).replace('.', ',') }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-if="order.items && order.items.length" style="margin-top:8px; padding-top:8px; border-top:1px solid #e5e7eb; font-size:0.9rem; color:#444;">
+                                <div v-for="it in order.items" :key="it.id" style="display:flex; justify-content: space-between; gap:8px; margin-bottom:4px;">
+                                    <div>
+                                        <strong>{{ it.book?.title || 'Livro' }}</strong>
+                                        <span style="color:#666;"> — {{ it.quantity }}x</span>
+                                    </div>
+                                    <div>
+                                        {{ 'R$ ' + Number((it.unit_price || 0) * (it.quantity || 0)).toFixed(2).replace('.', ',') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <p v-else style="color:#666;">Nenhuma venda realizada ainda.</p>
+                </div>
+            </div>
+
             
             <div v-if="routePage === 'my-loans' && currentUser && !currentUser.is_admin" class="container">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -594,6 +680,78 @@
                 <p v-else style="color: #666;">Você não possui empréstimos neste filtro.</p>
             </div>
 
+            <div v-if="routePage === 'cart' && currentUser && !currentUser.is_admin" class="container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>🛒 Carrinho de Compras</h2>
+                    <button class="btn btn-small btn-secondary" @click="goToPage('books')" style="width:auto;">← Voltar para Livros</button>
+                </div>
+
+                <div v-if="!cartItems || cartItems.length === 0">
+                    <p style="color:#666;">Seu carrinho está vazio.</p>
+                </div>
+                <div v-else>
+                    <div
+                        v-for="item in cartItems"
+                        :key="item.bookId"
+                        style="padding: 12px 16px; background: white; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); border: 1px solid #e5e7eb;"
+                    >
+                        <div style="display:flex; gap:16px; align-items:center;">
+                            <div style="width:72px; height:96px; border-radius:6px; overflow:hidden; background:#f3f4f6; flex-shrink:0;">
+                                <img
+                                    v-if="item.book && item.book.photo"
+                                    :src="thumb(item.book.photo, 300, 420)"
+                                    :alt="item.book.title"
+                                    style="width:100%; height:100%; object-fit:cover;"
+                                >
+                                <div v-else style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#9ca3af; font-size:2rem;">
+                                    📚
+                                </div>
+                            </div>
+                            <div style="flex:1; display:flex; justify-content: space-between; align-items: center; gap:12px;">
+                                <div>
+                                    <div style="font-weight:600; color:#162c74; font-size:0.98rem; margin-bottom:4px;">
+                                        {{ item.book?.title || 'Livro' }}
+                                    </div>
+                                    <div style="color:#666; font-size:0.9rem; margin-bottom:4px;">
+                                        <span v-if="item.book && item.book.author">
+                                            por <span style="font-weight:600;">{{ item.book.author.name }}</span>
+                                        </span>
+                                    </div>
+                                    <div style="color:#666; font-size:0.85rem;">
+                                        Quantidade:
+                                        <button class="btn btn-small btn-secondary" style="width:auto; padding:2px 8px; margin-right:4px;" @click="changeCartQuantity(item.bookId, -1)">-</button>
+                                        <span>{{ item.quantity }}</span>
+                                        <button class="btn btn-small btn-secondary" style="width:auto; padding:2px 8px; margin-left:4px;" @click="changeCartQuantity(item.bookId, 1)">+</button>
+                                    </div>
+                                </div>
+                                <div style="text-align:right; min-width:140px;">
+                                    <div style="font-size:0.9rem; color:#555;">
+                                        Preço: {{ getBookPrice(item.book).toFixed(2).replace('.', ',') }}
+                                    </div>
+                                    <div style="font-size:0.95rem; font-weight:600; color:#162c74; margin-top:4px;">
+                                        Subtotal:
+                                        {{ (getBookPrice(item.book) * (item.quantity || 0)).toFixed(2).replace('.', ',') }}
+                                    </div>
+                                    <button class="btn btn-small btn-danger" style="margin-top:6px; width:auto;" @click="removeFromCart(item.bookId)">
+                                        Remover
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 16px; padding: 12px 16px; background:#f8f9fa; border-radius: 8px; display:flex; justify-content: space-between; align-items:center;">
+                        <div style="font-size:1rem; color:#162c74; font-weight:600;">
+                            Total: {{ cartTotalFormatted }}
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button class="btn btn-small btn-secondary" style="width:auto;" @click="clearCart">Esvaziar carrinho</button>
+                            <button class="btn btn-small" style="width:auto;" @click="handleCheckout">Finalizar compra</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             
             <div v-if="routePage === 'book-detail' && selectedBook" class="container">
                 <button class="btn btn-secondary btn-small" @click="goToPage('books')" style="width: auto; margin-bottom: 15px;">← Voltar</button>
@@ -612,6 +770,9 @@
                                     <div>
                                         <label style="font-size:0.9rem;color:#555;">Devolução:</label>
                                         <input type="date" v-model="borrowEndDate" :min="minEndDate" :max="maxDate2030" style="padding:6px;border:1px solid #dee2e6;border-radius:6px;">
+                                        <p v-if="borrowEndDate" style="margin-top:4px; font-size:0.85rem; color:#666;">
+                                            Data escolhida: {{ formatDate(borrowEndDate) }}
+                                        </p>
                                     </div>
                                     <button
                                         v-if="!isBookBorrowedByMe(selectedBook.id)"
@@ -637,6 +798,13 @@
                                     >
                                         {{ isFavorite(selectedBook.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos' }}
                                     </button>
+                                    <button
+                                        class="btn btn-small btn-secondary"
+                                        @click.stop="addToCart(selectedBook)"
+                                        style="width:auto;"
+                                    >
+                                        🛒 Adicionar ao carrinho
+                                    </button>
                                 </div>
                                 <div v-if="isBookBorrowedByMe(selectedBook.id)" style="margin-top:8px; font-size:0.85rem; color:#16a34a;">
                                     ✅ Você está com este livro emprestado
@@ -647,7 +815,7 @@
                             </div>
                             <div v-else-if="currentUser && currentUser.is_admin" style="padding:8px 0; color:#555; font-size:0.9rem;">👨‍💼 Administradores não podem alugar ou favoritar livros</div>
                             <div v-else>
-                                <button class="btn btn-small" @click="goToPage('login')" style="width:auto;">🔐 Faça login para alugar</button>
+                                <button class="btn btn-small" @click="goToPage('login')" style="width:auto;">🔐 Faça login para alugar ou comprar</button>
                             </div>
                         </div>
                         <div style="margin-top:20px;">
@@ -805,7 +973,7 @@
                         <button class="btn btn-primary" @click="confirmRent">Confirmar</button>
                         <button class="btn btn-secondary" @click="closeRentModal">Cancelar</button>
                     </div>
-                    <p style="color:#666; font-size:0.9rem; margin-top:8px;">Início: hoje. Devolução: após hoje, até 2030-12-31.</p>
+                    <p style="color:#666; font-size:0.9rem; margin-top:8px;">Início: hoje. Devolução: após hoje, até 31/12/2030.</p>
                 </div>
             </div>
         </div>
@@ -882,6 +1050,11 @@
                                     <button type="button" class="btn btn-small" @click="openUpload('book')">Upload</button>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Preço (R$):</label>
+                            <input type="number" step="0.01" min="0" v-model.number="newBook.price">
                         </div>
 
                         <button type="submit" class="btn btn-primary">Salvar</button>
@@ -1012,7 +1185,8 @@
                     title: '',
                     author_id: '',
                     description: '',
-                    photo: ''
+                    photo: '',
+                    price: null,
                 },
 
                 newBookAuthorMode: 'existing',
@@ -1023,7 +1197,8 @@
                     title: '',
                     author_id: '',
                     description: '',
-                    photo: ''
+                    photo: '',
+                    price: null,
                 },
 
                 newAuthor: {
@@ -1061,6 +1236,16 @@
                 activeBookIds: [],
 
                 adminLoansFilter: 'all',
+
+                adminOrders: [],
+                adminOrdersLoading: false,
+
+                cartItems: [],
+
+                showPixModal: false,
+                pixCode: '',
+                pixAmount: 0,
+                pendingCheckoutItems: [],
 
             };
         },
@@ -1163,6 +1348,32 @@
                     }
                     return all;
                 } catch { return []; }
+            },
+            cartCount() {
+                try {
+                    return (this.cartItems || []).reduce((sum, item) => sum + (item.quantity || 0), 0);
+                } catch { return 0; }
+            },
+            cartTotal() {
+                try {
+                    return (this.cartItems || []).reduce((sum, item) => {
+                        const price = this.getBookPrice(item.book);
+                        const qty = item.quantity || 0;
+                        return sum + price * qty;
+                    }, 0);
+                } catch { return 0; }
+            },
+            cartTotalFormatted() {
+                const total = this.cartTotal || 0;
+                return 'R$ ' + total.toFixed(2).replace('.', ',');
+            },
+            pixAmountFormatted() {
+                try {
+                    const v = this.pixAmount || this.cartTotal || 0;
+                    return 'R$ ' + Number(v).toFixed(2).replace('.', ',');
+                } catch {
+                    return 'R$ 0,00';
+                }
             }
         },
         
@@ -1319,10 +1530,28 @@ async handleResetPassword() {
                     return String(d);
                 } catch { return String(d || ''); }
             },
+            formatOrderStatus(status) {
+                const s = (status || '').toString().toLowerCase();
+                if (!s || s === 'paid') return 'Pago';
+                if (s === 'pending') return 'Pendente';
+                if (s === 'cancelled' || s === 'canceled') return 'Cancelado';
+                return s;
+            },
+            getBookPrice(book) {
+                try {
+                    if (book && typeof book.price === 'number' && book.price > 0) {
+                        return book.price;
+                    }
+                    
+                    return 19.9;
+                } catch (e) {
+                    return 19.9;
+                }
+            },
 
             goToPage(page) {
 
-                const restricted = ['users','profile','loans','my-loans'];
+                const restricted = ['users','profile','loans','my-loans','cart','sales'];
                 if (!this.currentUser && restricted.includes(page)) {
                     this.routePage = 'login';
                     if (isBrowser) window.location.hash = 'login';
@@ -1336,6 +1565,7 @@ async handleResetPassword() {
                 if (page === 'users' && this.currentUser) this.loadUsers();
                 if (page === 'loans' && this.currentUser && this.currentUser.is_admin) this.loadAllLoans();
                 if (page === 'my-loans' && this.currentUser) this.loadUserData();
+                if (page === 'sales' && this.currentUser && this.currentUser.is_admin) this.loadAdminOrders();
             },
             openUserProfile(user) {
                 try {
@@ -1486,13 +1716,13 @@ async handleResetPassword() {
             async loadBooks() {
                 try {
                     this.loading = true;
-                    const data = await this.graphql('query Books($all: Boolean) { books(all: $all) { id title description photo author { id name bio photo } } }', { all: true });
+                    const data = await this.graphql('query Books($all: Boolean) { books(all: $all) { id title description photo price created_at author { id name bio photo } } }', { all: true });
                     const list = data && Array.isArray(data.books) ? data.books : [];
                     this.books = list;
                     this.totalItems = this.books.length;
                 } catch (error) {
                     console.error('Erro ao carregar livros:', error);
-                    this.errorMessage = ' Não foi possível carregar os livros. Tente novamente.';
+                    this.errorMessage = 'Não foi possível carregar os livros. Tente novamente.';
                 } finally {
                     this.loading = false;
                 }
@@ -1502,7 +1732,7 @@ async handleResetPassword() {
                 try {
                     if (!book?.author) {
                         const data = await this.graphql(
-                            'query Book($id: ID!) { book(id: $id) { id title description photo author { id name bio photo } } }',
+                            'query Book($id: ID!) { book(id: $id) { id title description photo price created_at author { id name bio photo } } }',
                             { id: book.id }
                         );
                         if (data && data.book) book = data.book;
@@ -1520,7 +1750,7 @@ async handleResetPassword() {
                 this.loadReviews(book.id);
             },
             openRentModal(book) {
-                if (!this.currentUser) { this.errorMessage = 'Faça login para alugar'; return; }
+                if (!this.currentUser) { this.errorMessage = 'Faça login para alugar ou comprar'; return; }
                 this.rentTargetBook = book;
                 const t = new Date(); t.setDate(t.getDate()+1);
                 this.rentReturnDate = t.toISOString().slice(0,10);
@@ -1541,7 +1771,7 @@ async handleResetPassword() {
             async borrowBook(book, startDate, endDate) {
                 try {
                     if (!this.currentUser) {
-                        this.errorMessage = 'Faça login para alugar';
+                        this.errorMessage = 'Faça login para alugar ou comprar';
                         return;
                     }
                     if (this.currentUser?.is_admin) {
@@ -1559,7 +1789,7 @@ async handleResetPassword() {
                 if (sd < todayStr) { this.errorMessage = 'Data de início deve ser hoje ou posterior.'; return; }
                 if (ed <= todayStr) { this.errorMessage = 'Data de devolução deve ser após hoje.'; return; }
                 if (ed <= sd) { this.errorMessage = 'Data de devolução deve ser após a data de início.'; return; }
-                if (ed > maxStr) { this.errorMessage = 'Data de devolução deve ser até 2030-12-31.'; return; }
+                if (ed > maxStr) { this.errorMessage = 'Data de devolução deve ser até 31/12/2030.'; return; }
                     if (this.isBookBorrowedByMe(book.id)) {
                         alert('Você já alugou este livro!');
                         return;
@@ -1574,6 +1804,110 @@ async handleResetPassword() {
                     this.errorMessage = '';
                 } catch (e) {
                     this.errorMessage = '❌ Não foi possível alugar o livro.';
+                }
+            },
+            addToCart(book) {
+                try {
+                    if (!this.currentUser) {
+                        this.errorMessage = 'Faça login para adicionar ao carrinho.';
+                        return;
+                    }
+                    if (this.currentUser && this.currentUser.is_admin) {
+                        this.errorMessage = '👨‍💼 Administradores não podem comprar livros.';
+                        return;
+                    }
+                    if (!book || !book.id) return;
+                    const items = Array.isArray(this.cartItems) ? [...this.cartItems] : [];
+                    const idx = items.findIndex(i => i.bookId === book.id);
+                    const price = this.getBookPrice(book);
+                    if (idx >= 0) {
+                        items[idx].quantity = (items[idx].quantity || 0) + 1;
+                    } else {
+                        items.push({
+                            bookId: book.id,
+                            book,
+                            quantity: 1,
+                            price,
+                        });
+                    }
+                    this.cartItems = items;
+                    this.errorMessage = '';
+                    this.successMessage = 'Livro adicionado ao carrinho.';
+                } catch (e) {}
+            },
+            removeFromCart(bookId) {
+                try {
+                    const id = bookId && bookId.id ? bookId.id : bookId;
+                    this.cartItems = (this.cartItems || []).filter(i => i.bookId !== id);
+                } catch (e) {}
+            },
+            changeCartQuantity(bookId, delta) {
+                try {
+                    const id = bookId && bookId.id ? bookId.id : bookId;
+                    const items = Array.isArray(this.cartItems) ? [...this.cartItems] : [];
+                    const idx = items.findIndex(i => i.bookId === id);
+                    if (idx === -1) return;
+                    const nextQty = (items[idx].quantity || 0) + delta;
+                    if (nextQty <= 0) {
+                        items.splice(idx, 1);
+                    } else {
+                        items[idx].quantity = nextQty;
+                    }
+                    this.cartItems = items;
+                } catch (e) {}
+            },
+            clearCart() {
+                this.cartItems = [];
+            },
+            async handleCheckout() {
+                try {
+                    if (!this.currentUser) {
+                        this.errorMessage = 'Faça login para finalizar a compra.';
+                        return;
+                    }
+                    if (this.currentUser && this.currentUser.is_admin) {
+                        this.errorMessage = '👨‍💼 Administradores não podem comprar livros.';
+                        return;
+                    }
+                    const items = (this.cartItems || [])
+                        .filter(i => i && i.bookId && i.quantity > 0)
+                        .map(i => ({ book_id: i.bookId, quantity: i.quantity }));
+                    if (!items.length) {
+                        this.errorMessage = 'Seu carrinho está vazio.';
+                        return;
+                    }
+                    this.errorMessage = '';
+                    this.pendingCheckoutItems = items;
+                    this.pixAmount = this.cartTotal || 0;
+                    const rand = () => Math.random().toString(36).slice(2, 10).toUpperCase();
+                    this.pixCode = '00020126BRPIX-' + rand() + '-' + rand() + '-' + Date.now().toString();
+                    this.showPixModal = true;
+                } catch (e) {
+                    this.errorMessage = e.message || 'Não foi possível preparar o pagamento.';
+                }
+            },
+            closePixModal() {
+                this.showPixModal = false;
+            },
+            async confirmPixPayment() {
+                try {
+                    const items = Array.isArray(this.pendingCheckoutItems) ? this.pendingCheckoutItems : [];
+                    if (!items.length) {
+                        this.errorMessage = 'Nenhum item para finalizar.';
+                        return;
+                    }
+                    this.errorMessage = '';
+                    await this.graphql(
+                        'mutation Checkout($input: CheckoutInput!) { checkout(input: $input) { id total status } }',
+                        { input: { items } }
+                    );
+                    this.clearCart();
+                    this.pendingCheckoutItems = [];
+                    this.showPixModal = false;
+                    this.successMessage = '✅ Pagamento PIX simulado com sucesso! Compra concluída.';
+                    this.goToPage('books');
+                } catch (e) {
+                    this.errorMessage = e.message || 'Não foi possível finalizar a compra.';
                 }
             },
             
@@ -1734,7 +2068,8 @@ async handleResetPassword() {
                     const payload = {
                         title: this.newBook.title,
                         description: this.newBook.description || '',
-                        photo: this.newBook.photo || ''
+                        photo: this.newBook.photo || '',
+                        price: this.newBook.price != null ? Number(this.newBook.price) : null,
                     };
 
                     if (this.newBookAuthorMode === 'existing') {
@@ -1760,7 +2095,7 @@ async handleResetPassword() {
                     await this.loadBooks();
                     await this.loadAuthors();
                     this.showCreateBookModal = false;
-                    this.newBook = { title: '', author_id: '', description: '', photo: '' };
+                    this.newBook = { title: '', author_id: '', description: '', photo: '', price: null };
                     this.newBookAuthorMode = 'existing';
                     this.newAuthor = { name: '', bio: '', photo: '' };
                     this.newBookError = '';
@@ -1880,10 +2215,13 @@ async handleResetPassword() {
             openEditBook(book) {
                 this.editBook = {
                     id: book.id,
-                    title: book.title,
+                    title: book.title || '',
                     author_id: book.author?.id || '',
                     description: book.description || '',
-                    photo: book.photo || ''
+                    photo: book.photo || '',
+                    price: (typeof book.price === 'number' && book.price > 0)
+                        ? book.price
+                        : this.getBookPrice(book),
                 };
                 this.showEditBookModal = true;
             },
@@ -1893,10 +2231,11 @@ async handleResetPassword() {
                         title: this.editBook.title,
                         description: this.editBook.description,
                         author_id: parseInt(this.editBook.author_id),
-                        photo: this.editBook.photo
+                        photo: this.editBook.photo,
+                        price: this.editBook.price != null ? Number(this.editBook.price) : null,
                     };
                     const data = await this.graphql(
-                        'mutation UpdateBook($id: ID!, $input: UpdateBookInput!) { updateBook(id: $id, input: $input) { id title description photo author { id name bio photo } } }',
+                        'mutation UpdateBook($id: ID!, $input: UpdateBookInput!) { updateBook(id: $id, input: $input) { id title description photo price author { id name bio photo } } }',
                         { id: this.editBook.id, input: payload }
                     );
                     this.showEditBookModal = false;
@@ -2016,6 +2355,20 @@ async handleResetPassword() {
                     this.allLoansLoading = false;
                 }
             },
+            async loadAdminOrders() {
+                try {
+                    this.adminOrdersLoading = true;
+                    const data = await this.graphql(
+                        'query Orders { orders { id user_id total status created_at user { id name email } items { id book_id quantity unit_price book { id title author { id name } } } } }'
+                    );
+                    const list = data && Array.isArray(data.orders) ? data.orders : [];
+                    this.adminOrders = list;
+                } catch (e) {
+                    this.adminOrders = [];
+                } finally {
+                    this.adminOrdersLoading = false;
+                }
+            },
             async deleteLoan(id) {
                 try {
                     await this.graphql(
@@ -2119,17 +2472,18 @@ async handleResetPassword() {
                 const hash = (h || (window.location.hash ? window.location.hash.substring(1) : '')).replace(/^#/, '');
                 if (!hash) return;
 
-                const restricted = ['users','profile','loans','my-loans'];
+                const restricted = ['users','profile','loans','my-loans','sales'];
                 if (!this.currentUser && restricted.includes(hash)) {
                     this.routePage = 'login';
                     if (isBrowser) window.location.hash = 'login';
                     return;
                 }
-                if (['books','authors','users','profile','login','loans','my-loans'].includes(hash)) {
+                if (['books','authors','users','profile','login','loans','my-loans','sales'].includes(hash)) {
                     this.routePage = hash;
                     if (hash === 'users' && this.currentUser) this.loadUsers();
                     if (hash === 'loans' && this.currentUser && this.currentUser.is_admin) this.loadAllLoans();
                     if (hash === 'my-loans' && this.currentUser) this.loadUserData();
+                    if (hash === 'sales' && this.currentUser && this.currentUser.is_admin) this.loadAdminOrders();
                     return;
                 }
                 if (hash.startsWith('user/')) {

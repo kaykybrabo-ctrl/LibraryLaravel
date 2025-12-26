@@ -51,3 +51,26 @@ services:
       - REDIS_PORT=6379
     command: sh -lc "php artisan queue:work --verbose --tries=1 --timeout=90"
     restart: unless-stopped
+
+  scheduler:
+    container_name: library_laravel_scheduler
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - redis
+    volumes:
+      - ./:/app
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=1
+      - APP_URL=http://localhost:8080
+      - DB_CONNECTION=sqlite
+      - DB_DATABASE=/app/database/database.sqlite
+      - CACHE_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+      - REDIS_CLIENT=phpredis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: sh -lc "php artisan schedule:work"
+    restart: unless-stopped

@@ -11,9 +11,12 @@ class Book extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'description', 'photo', 'author_id'];
+    protected $fillable = ['title', 'description', 'photo', 'price', 'author_id'];
     protected $hidden = ['created_at', 'updated_at'];
     protected $with = ['author'];
+    protected $casts = [
+        'price' => 'float',
+    ];
 
     public function author(): BelongsTo
     {
@@ -33,5 +36,10 @@ class Book extends Model
     public function favorites(): HasMany
     {
         return $this->hasMany(Favorite::class);
+    }
+
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
     }
 }

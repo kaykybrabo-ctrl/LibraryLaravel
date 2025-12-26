@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Loan;
 use App\Models\Favorite;
 use App\Models\Review;
+use App\Models\Order;
 use App\Services\BookService;
 use App\Services\AuthorService;
 use Nuwave\Lighthouse\Support\Contracts\GraphQLContext;
@@ -115,6 +116,33 @@ class LibraryQuery
 
         return Review::where('book_id', $bookId)
             ->with('user')
+            ->orderByDesc('created_at')
+            ->get();
+    }
+
+    public function myOrders(): iterable
+    {
+        $user = auth('api')->user();
+
+        if (!$user) {
+            throw new \Exception('Não autorizado.');
+        }
+
+        return Order::where('user_id', $user->id)
+            ->with(['items.book.author'])
+            ->orderByDesc('created_at')
+            ->get();
+    }
+
+    public function orders(): iterable
+    {
+        $user = auth('api')->user();
+
+        if (!$user || !$user->is_admin) {
+            throw new \Exception('Forbidden');
+        }
+
+        return Order::with(['user', 'items.book.author'])
             ->orderByDesc('created_at')
             ->get();
     }

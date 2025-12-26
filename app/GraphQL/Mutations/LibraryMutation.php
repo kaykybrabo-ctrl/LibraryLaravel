@@ -8,6 +8,8 @@ use App\Models\Author;
 use App\Models\Loan;
 use App\Models\Favorite;
 use App\Models\Review;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Mail\ResetPasswordMail;
 use App\Services\BookService;
 use App\Services\AuthorService;
@@ -495,6 +497,79 @@ class LibraryMutation
         ]);
 
         return $user->fresh();
+    }
+
+    public function checkout($rootValue, array $args): Order
+    {
+        $user = auth('api')->user();
+
+        if (!$user) {
+            throw new \Exception('Não autorizado.');
+        }
+
+        if (!empty($user->is_admin)) {
+            throw new \Exception('Administradores não podem comprar livros.');
+        }
+
+        $input = $args['input'] ?? [];
+
+        $validator = Validator::make($input, [
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.book_id' => ['required', 'integer', 'exists:books,id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+        ]);
+
+        if ($validator->fails()) {
+            throw new \Exception($validator->errors()->first());
+        }
+
+        $data = $validator->validated();
+        $itemsInput = $data['items'];
+
+        $order = DB::transaction(function () use ($user, $itemsInput) {
+            $bookIds = array_column($itemsInput, 'book_id');
+            $books = Book::whereIn('id', $bookIds)->get()->keyBy('id');
+
+            $total = 0.0;
+
+            $order = Order::create([
+                'user_id' => $user->id,
+                'total' => 0,
+                'status' => 'paid',
+            ]);
+
+            foreach ($itemsInput as $item) {
+                $bookId = (int) $item['book_id'];
+                $qty = (int) $item['quantity'];
+                $book = $books->get($bookId);
+
+                if (!$book) {
+                    throw new \Exception('Livro não encontrado.');
+                }
+
+                $unit = (float) ($book->price ?? 0);
+                if ($unit <= 0) {
+                    $unit = 19.90;
+                }
+
+                $lineTotal = $unit * $qty;
+                $total += $lineTotal;
+
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'book_id' => $bookId,
+                    'quantity' => $qty,
+                    'unit_price' => $unit,
+                ]);
+            }
+
+            $order->total = $total;
+            $order->save();
+
+            return $order;
+        });
+
+        return $order->load(['items.book.author', 'user']);
     }
 
     public function requestPasswordReset($rootValue, array $args): array

@@ -14,6 +14,8 @@ type Query {
     activeBookIds: [ID!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@activeBookIds")
     favoriteBookByUser(user_id: ID!): Book @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@favoriteBookByUser")
     reviewsByBook(book_id: ID!): [Review!]! @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@reviewsByBook")
+    myOrders: [Order!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@myOrders")
+    orders: [Order!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@orders")
 }
 
 "Account of a person who uses this application."
@@ -73,6 +75,8 @@ type Mutation {
     uploadImage(target: String!, filename: String!, fileData: String!): String!
         @guard(with: ["api"])
         @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@uploadImage")
+
+    checkout(input: CheckoutInput!): Order @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@checkout")
 }
 
 type Author {
@@ -88,7 +92,10 @@ type Book {
     title: String!
     description: String
     photo: String
+    price: Float
     author: Author! @belongsTo
+    created_at: DateTime
+    updated_at: DateTime
 }
 
 type Loan {
@@ -102,6 +109,25 @@ type Loan {
     is_overdue: Boolean
     days_remaining: Int
     user: User! @belongsTo
+    book: Book! @belongsTo
+}
+
+type Order {
+    id: ID!
+    user_id: ID!
+    total: Float!
+    status: String!
+    created_at: DateTime!
+    user: User! @belongsTo
+    items: [OrderItem!]! @hasMany
+}
+
+type OrderItem {
+    id: ID!
+    order_id: ID!
+    book_id: ID!
+    quantity: Int!
+    unit_price: Float!
     book: Book! @belongsTo
 }
 
@@ -145,6 +171,7 @@ input CreateBookInput {
     title: String!
     description: String
     photo: String
+    price: Float
     author_id: ID
     author_name: String
     author_bio: String
@@ -155,6 +182,7 @@ input UpdateBookInput {
     title: String!
     description: String
     photo: String
+    price: Float
     author_id: ID!
 }
 
@@ -186,6 +214,15 @@ input ReviewInput {
     book_id: ID!
     rating: Int!
     comment: String
+}
+
+input CartItemInput {
+    book_id: ID!
+    quantity: Int!
+}
+
+input CheckoutInput {
+    items: [CartItemInput!]!
 }
 
 input UpdateProfileInput {
