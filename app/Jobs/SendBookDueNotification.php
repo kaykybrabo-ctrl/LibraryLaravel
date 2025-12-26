@@ -3,12 +3,12 @@
 namespace App\Jobs;
 
 use App\Models\Loan;
+use App\Services\Notifications\BookDueNotificationStrategy;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
 
 class SendBookDueNotification implements ShouldQueue
 {
@@ -21,7 +21,7 @@ class SendBookDueNotification implements ShouldQueue
         $this->loanId = $loanId;
     }
 
-    public function handle(): void
+    public function handle(BookDueNotificationStrategy $strategy): void
     {
         $loan = Loan::with(['user', 'book'])->find($this->loanId);
 
@@ -35,11 +35,6 @@ class SendBookDueNotification implements ShouldQueue
             'book' => $loan->book,
         ])->render();
 
-        Log::info('book_due_notification', [
-            'user_id' => $loan->user_id,
-            'book_id' => $loan->book_id,
-            'return_date' => $loan->return_date ? $loan->return_date->toDateString() : null,
-            'payload' => $html,
-        ]);
+        $strategy->notify($loan, $html);
     }
 }

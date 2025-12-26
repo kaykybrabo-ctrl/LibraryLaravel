@@ -4,6 +4,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Providers\AuthServiceProvider;
+use App\Providers\AppServiceProvider;
 use PHPOpenSourceSaver\JWTAuth\Providers\LaravelServiceProvider as JWTServiceProvider;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -16,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withEvents()
     ->withProviders([
         AuthServiceProvider::class,
+        AppServiceProvider::class,
         JWTServiceProvider::class,
     ])
     ->withMiddleware(function (Middleware $middleware) {

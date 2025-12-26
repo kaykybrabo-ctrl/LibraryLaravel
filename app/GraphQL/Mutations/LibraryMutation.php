@@ -8,11 +8,16 @@ use App\Models\Author;
 use App\Models\Loan;
 use App\Models\Favorite;
 use App\Models\Review;
+use App\Mail\ResetPasswordMail;
 use App\Services\BookService;
 use App\Services\AuthorService;
 use App\Jobs\SendBookDueNotification;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
@@ -204,7 +209,10 @@ class LibraryMutation
 
         $loan = Loan::create($data);
 
-        SendBookDueNotification::dispatch($loan->id);
+        try {
+            SendBookDueNotification::dispatch($loan->id);
+        } catch (\Throwable $e) {
+        }
 
         return $loan->load(['book.author', 'user']);
     }
@@ -487,5 +495,83 @@ class LibraryMutation
         ]);
 
         return $user->fresh();
+    }
+
+    public function requestPasswordReset($rootValue, array $args): array
+    {
+        $email = (string) ($args['email'] ?? '');
+
+        $validator = Validator::make(['email' => $email], [
+            'email' => ['required', 'email'],
+        ]);
+
+        if ($validator->fails()) {
+            throw new \Exception($validator->errors()->first());
+        }
+
+        $user = User::where('email', $email)->first();
+
+        if (!$user) {
+            return ['message' => 'Se existir uma conta com este e-mail, enviaremos um link de redefinição.'];
+        }
+
+        $token = Str::random(64);
+
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $user->email],
+            [
+                'token' => Hash::make($token),
+                'created_at' => now(),
+            ]
+        );
+
+        $baseUrl = config('app.url', 'http://localhost:8080');
+        $url = rtrim($baseUrl, '/') . '/reset-password?token=' . urlencode($token) . '&email=' . urlencode($user->email);
+
+        Log::info('Password reset link for ' . $user->email . ': ' . $url);
+
+        Mail::to($user->email)->send(new ResetPasswordMail($user, $url));
+
+        return ['message' => 'Se existir uma conta com este e-mail, enviaremos um link de redefinição.'];
+    }
+
+    public function resetPassword($rootValue, array $args): array
+    {
+        $input = $args['input'] ?? [];
+
+        $validator = Validator::make($input, [
+            'email' => ['required', 'email'],
+            'token' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:3'],
+        ]);
+
+        if ($validator->fails()) {
+            throw new \Exception($validator->errors()->first());
+        }
+
+        $data = $validator->validated();
+
+        $record = DB::table('password_reset_tokens')->where('email', $data['email'])->first();
+
+        if (!$record) {
+            throw new \Exception('Token inválido ou expirado.');
+        }
+
+        if (!Hash::check($data['token'], $record->token)) {
+            throw new \Exception('Token inválido ou expirado.');
+        }
+
+        $user = User::where('email', $data['email'])->first();
+
+        if (!$user) {
+            throw new \Exception('Usuário não encontrado.');
+        }
+
+        $user->password = Hash::make($data['password']);
+        $user->save();
+
+        DB::table('password_reset_tokens')->where('email', $data['email'])->delete();
+
+        return ['message' => 'Senha redefinida com sucesso.'];
     }
 }

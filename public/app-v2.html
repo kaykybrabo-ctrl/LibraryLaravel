@@ -150,7 +150,7 @@
             <div class="login-box">
                 <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
 
-                <div v-if="!showRegister">
+                <div v-if="!showRegister && !showResetForm">
                     <h2>Entrar na sua conta</h2>
                     <form @submit.prevent="handleLogin">
                         <div class="form-group">
@@ -163,6 +163,7 @@
                         </div>
                         <button type="submit" class="btn">Entrar</button>
                     </form>
+                    <p class="text-center mt-2"><a href="#" @click.prevent="openResetRequest">Esqueceu a senha?</a></p>
                     <p class="text-center mt-3">Não tem conta? <a href="#" @click.prevent="showRegister = true">Criar conta</a></p>
                     <button class="btn btn-secondary" style="margin-top: 10px; width: 100%;" @click="goToLanding">← Voltar para Home</button>
                     
@@ -171,6 +172,37 @@
                         <p style="margin-bottom: 5px;">👤 Admin: kayky@gmail.com / 123</p>
                         <p>👤 Usuário: kaue@gmail.com / 123</p>
                     </div>
+                </div>
+
+                <div v-else-if="showResetForm">
+                    <h2 v-if="!resetToken">Recuperar senha</h2>
+                    <h2 v-else>Definir nova senha</h2>
+
+                    <form v-if="!resetToken" @submit.prevent="handleRequestPasswordReset">
+                        <div class="form-group">
+                            <label>Email cadastrado:</label>
+                            <input type="email" v-model="forgotEmail" required>
+                        </div>
+                        <button type="submit" class="btn">Enviar link de redefinição</button>
+                    </form>
+
+                    <form v-else @submit.prevent="handleResetPassword">
+                        <p style="margin-bottom:10px; font-size:0.9rem; color:#555;">
+                            E-mail: <strong>{{ resetEmail }}</strong>
+                        </p>
+                        <div class="form-group">
+                            <label>Nova senha:</label>
+                            <input type="password" v-model="resetNewPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Confirmar nova senha:</label>
+                            <input type="password" v-model="resetNewPasswordConfirm" required>
+                        </div>
+                        <button type="submit" class="btn">Salvar nova senha</button>
+                    </form>
+
+                    <p class="text-center mt-3"><a href="#" @click.prevent="closeResetForm">Voltar para login</a></p>
+                    <button class="btn btn-secondary" style="margin-top: 10px; width: 100%;" @click="goToLanding">← Voltar para Home</button>
                 </div>
 
                 <div v-else>
@@ -251,6 +283,8 @@
                                     <button class="btn btn-small" :disabled="isBookUnavailable(book.id) && !isBookBorrowedByMe(book.id)" @click.stop="isBookBorrowedByMe(book.id) ? promptReturn(book.id) : openRentModal(book)">
                                         {{ isBookBorrowedByMe(book.id) ? '🔄 Devolver' : (isBookUnavailable(book.id) ? 'Indisponível' : 'Alugar') }}
                                     </button>
+                                    <small v-if="isBookBorrowedByMe(book.id)" style="font-size:0.8rem; color:#16a34a;">✅ Você está com este livro emprestado</small>
+                                    <small v-else-if="isBookUnavailable(book.id)" style="font-size:0.8rem; color:#b91c1c;">⚠️ Alugado por outro usuário</small>
                                 </div>
                                 <div v-else style="margin-top: 10px;">
                                     <button v-if="!currentUser" class="btn btn-small" @click.stop="goToPage('login')">🔐 Faça login para alugar</button>
@@ -579,10 +613,36 @@
                                         <label style="font-size:0.9rem;color:#555;">Devolução:</label>
                                         <input type="date" v-model="borrowEndDate" :min="minEndDate" :max="maxDate2030" style="padding:6px;border:1px solid #dee2e6;border-radius:6px;">
                                     </div>
-                                    <button class="btn btn-small" @click="borrowBook(selectedBook, borrowStartDate, borrowEndDate)" :disabled="isBookUnavailable(selectedBook.id) && !isBookBorrowedByMe(selectedBook.id)" style="width:auto;">
-                                        {{ isBookBorrowedByMe(selectedBook.id) ? ' Devolver' : (isBookUnavailable(selectedBook.id) ? 'Indisponível' : 'Alugar') }}
+                                    <button
+                                        v-if="!isBookBorrowedByMe(selectedBook.id)"
+                                        class="btn btn-small"
+                                        @click="borrowBook(selectedBook, borrowStartDate, borrowEndDate)"
+                                        :disabled="isBookUnavailable(selectedBook.id)"
+                                        style="width:auto;"
+                                    >
+                                        {{ isBookUnavailable(selectedBook.id) ? 'Indisponível' : 'Alugar' }}
                                     </button>
-                                    <button v-if="isBookBorrowedByMe(selectedBook.id)" class="btn btn-small btn-danger" @click="promptReturn(selectedBook.id)" style="width:auto;">Devolver</button>
+                                    <button
+                                        v-else
+                                        class="btn btn-small btn-danger"
+                                        @click="promptReturn(selectedBook.id)"
+                                        style="width:auto;"
+                                    >
+                                        Devolver
+                                    </button>
+                                    <button
+                                        class="btn btn-small"
+                                        @click.stop="toggleFavorite(selectedBook)"
+                                        style="width:auto;"
+                                    >
+                                        {{ isFavorite(selectedBook.id) ? 'Remover dos favoritos' : 'Adicionar aos favoritos' }}
+                                    </button>
+                                </div>
+                                <div v-if="isBookBorrowedByMe(selectedBook.id)" style="margin-top:8px; font-size:0.85rem; color:#16a34a;">
+                                    ✅ Você está com este livro emprestado
+                                </div>
+                                <div v-else-if="isBookUnavailable(selectedBook.id)" style="margin-top:8px; font-size:0.85rem; color:#b91c1c;">
+                                    ⚠️ Livro alugado por outro usuário
                                 </div>
                             </div>
                             <div v-else-if="currentUser && currentUser.is_admin" style="padding:8px 0; color:#555; font-size:0.9rem;">👨‍💼 Administradores não podem alugar ou favoritar livros</div>
@@ -688,13 +748,41 @@
                                 <button type="button" class="btn btn-small" @click="openUpload('profile')">Upload</button>
                             </div>
                         </div>
-                        <div style="display:flex; gap:8px;">
-                            <button class="btn btn-small btn-secondary" @click="removeFavorite" style="margin-top: 10px;">Remover dos favoritos</button>
-                        </div>
-                        <p v-else style="color: #666;">Você ainda não tem um livro favorito.</p>
                     </div>
-                    <div v-else style="margin-top: 30px; color: #666; font-size: 0.9rem;">
-                        👨‍💼 Administradores não têm livro favorito.
+
+                    <div style="margin-top: 24px;">
+                        <h3 style="margin: 0 0 10px 0; color: #162c74;">Meu livro favorito</h3>
+                        <div v-if="!currentUser.is_admin">
+                            <div v-if="userFavoriteBook" style="background: #f8f9fa; padding: 15px; border-radius: 8px; display:flex; gap:16px; align-items:center;">
+                                <div style="width:72px; height:96px; border-radius:6px; overflow:hidden; background:#f3f4f6; flex-shrink:0;">
+                                    <img
+                                        v-if="userFavoriteBook.photo"
+                                        :src="thumb(userFavoriteBook.photo, 300, 420)"
+                                        :alt="userFavoriteBook.title"
+                                        style="width:100%; height:100%; object-fit:cover;"
+                                    >
+                                    <div v-else style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#9ca3af; font-size:2rem;">
+                                        📚
+                                    </div>
+                                </div>
+                                <div style="flex:1;">
+                                    <h4 style="margin: 0 0 5px 0; color: #162c74;">{{ userFavoriteBook.title }}</h4>
+                                    <p style="margin: 0; color: #666; font-size: 0.9rem;">
+                                        <span v-if="userFavoriteBook.author" @click="selectAuthor(userFavoriteBook.author)" style="cursor:pointer;color:#162c74;text-decoration:underline;">
+                                            {{ userFavoriteBook.author.name }}
+                                        </span>
+                                        <span v-else>Autor desconhecido</span>
+                                    </p>
+                                    <div style="margin-top: 10px; display:flex; gap:8px;">
+                                        <button class="btn btn-small btn-secondary" @click="removeFavorite" style="width:auto;">Remover dos favoritos</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <p v-else style="color: #666;">Você ainda não tem um livro favorito.</p>
+                        </div>
+                        <div v-else style="color: #666; font-size: 0.9rem;">
+                            👨‍💼 Administradores não têm livro favorito.
+                        </div>
                     </div>
                 </div>
             </div>
@@ -862,6 +950,12 @@
                 registerEmail: '',
                 registerPassword: '',
                 showRegister: false,
+                showResetForm: false,
+                forgotEmail: '',
+                resetEmail: '',
+                resetToken: '',
+                resetNewPassword: '',
+                resetNewPasswordConfirm: '',
                 errorMessage: '',
                 successMessage: '',
                 
@@ -1072,7 +1166,88 @@
             }
         },
         
-        methods: {
+        methods: {openResetRequest() {
+    this.showRegister = false;
+    this.showResetForm = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.forgotEmail = this.loginEmail || '';
+},
+closeResetForm() {
+    this.showResetForm = false;
+    this.resetToken = '';
+    this.resetEmail = '';
+    this.resetNewPassword = '';
+    this.resetNewPasswordConfirm = '';
+},
+async handleRequestPasswordReset() {
+    try {
+        this.errorMessage = '';
+        this.successMessage = '';
+        if (!this.forgotEmail) {
+            this.errorMessage = 'Informe o e-mail cadastrado.';
+            return;
+        }
+        const data = await this.graphql(
+            'mutation RequestPasswordReset($email: String!) { requestPasswordReset(email: $email) { message } }',
+            { email: this.forgotEmail }
+        );
+        const msg = data && data.requestPasswordReset && data.requestPasswordReset.message
+            ? data.requestPasswordReset.message
+            : 'Se existir uma conta com este e-mail, enviaremos um link de redefinição.';
+        this.successMessage = msg;
+    } catch (e) {
+        this.errorMessage = e.message || 'Não foi possível enviar o link de redefinição.';
+    }
+},
+async handleResetPassword() {
+    try {
+        this.errorMessage = '';
+        this.successMessage = '';
+        if (!this.resetToken || !this.resetEmail) {
+        this.errorMessage = 'Link de redefinição inválido.';
+            return;
+        }
+        if (!this.resetNewPassword || this.resetNewPassword.length < 3) {
+            this.errorMessage = 'A nova senha deve ter pelo menos 3 caracteres.';
+            return;
+        }
+        if (this.resetNewPassword !== this.resetNewPasswordConfirm) {
+            this.errorMessage = 'A confirmação de senha não confere.';
+            return;
+        }
+        const data = await this.graphql(
+            'mutation ResetPassword($input: ResetPasswordInput!) { resetPassword(input: $input) { message } }',
+            { input: { email: this.resetEmail, token: this.resetToken, password: this.resetNewPassword } }
+        );
+        const msg = data && data.resetPassword && data.resetPassword.message
+            ? data.resetPassword.message
+            : 'Senha redefinida com sucesso.';
+
+        const loginData = await this.graphql(
+            'mutation Login($input: LoginInput!) { login(input: $input) { user { id name email is_admin photo } token } }',
+            { input: { email: this.resetEmail, password: this.resetNewPassword } }
+        );
+        const payload = loginData && loginData.login;
+        if (payload && payload.user) {
+            this.currentUser = payload.user;
+            this.authToken = payload.token || '';
+            if (isBrowser) {
+                localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+                if (this.authToken) localStorage.setItem('authToken', this.authToken);
+            }
+            await this.loadUserData();
+            this.closeResetForm();
+            this.successMessage = msg + ' Você foi autenticado automaticamente.';
+            this.goToPage('books');
+        } else {
+            this.successMessage = msg;
+            this.closeResetForm();
+        }
+    } catch (e) {
+        this.errorMessage = e.message || 'Não foi possível redefinir a senha.';
+    }
+},
 
             authHeaders() {
                 return this.authToken ? { 'Authorization': `Bearer ${this.authToken}` } : {};
@@ -1165,16 +1340,6 @@
             openUserProfile(user) {
                 try {
                     if (!this.currentUser || !user) return;
-
-                    if (String(this.currentUser.id) === String(user.id)) {
-                        this.editingProfile = true;
-                        this.routePage = 'profile';
-                        if (isBrowser) {
-                            window.location.hash = 'profile';
-                            window.scrollTo(0, 0);
-                        }
-                        return;
-                    }
 
                     this.selectedUser = user;
                     this.selectedUserLoans = [];
@@ -1448,13 +1613,15 @@
             
             isBookBorrowedByMe(bookId) {
                 try {
-                    return (this.userLoans || []).some(l => l.book.id === bookId && !l.returned_at);
+                    const targetId = String(bookId);
+                    return (this.userLoans || []).some(l => String(l.book?.id) === targetId && !l.returned_at);
                 } catch (e) { return false; }
             },
             isBookUnavailable(bookId) {
                 try {
-                    const id = typeof bookId === 'string' ? parseInt(bookId) : bookId;
-                    return Array.isArray(this.activeBookIds) && this.activeBookIds.includes(id);
+                    const targetId = String(bookId);
+                    const ids = Array.isArray(this.activeBookIds) ? this.activeBookIds : [];
+                    return ids.some(bid => String(bid) === targetId);
                 } catch (e) { return false; }
             },
 
@@ -1927,7 +2094,7 @@
                 if (!this.currentUser) return;
                 try {
                     const dataLoans = await this.graphql(
-                        'query UserLoansMe($userId: ID!) { userLoans(user_id: $userId) { id loan_date return_date returned_at status is_overdue days_remaining book { id title author { id name } } } }',
+                        'query UserLoansMe($userId: ID!) { userLoans(user_id: $userId) { id loan_date return_date returned_at status is_overdue days_remaining book { id title photo author { id name } } } }',
                         { userId: this.currentUser.id }
                     );
                     const listLoans = dataLoans && Array.isArray(dataLoans.userLoans) ? dataLoans.userLoans : [];
@@ -2057,6 +2224,18 @@
                     } else if (path === '/register') {
                         this.routePage = 'login';
                         this.showRegister = true;
+                        window.location.hash = 'login';
+                    } else if (path === '/reset-password') {
+                        this.routePage = 'login';
+                        this.showRegister = false;
+                        this.showResetForm = true;
+                        try {
+                            const params = new URLSearchParams(window.location.search || '');
+                            const token = params.get('token') || '';
+                            const email = params.get('email') || '';
+                            this.resetToken = token;
+                            this.resetEmail = email;
+                        } catch (e) {}
                         window.location.hash = 'login';
                     } else {
                         this.goToPage('books');

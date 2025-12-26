@@ -47,6 +47,9 @@ type Mutation {
     login(input: LoginInput!): AuthPayload @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@login")
     logout: MessagePayload @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@logout")
 
+    requestPasswordReset(email: String!): MessagePayload @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@requestPasswordReset")
+    resetPassword(input: ResetPasswordInput!): MessagePayload @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@resetPassword")
+
     createBook(input: CreateBookInput!): Book @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@createBook")
     updateBook(id: ID!, input: UpdateBookInput!): Book @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@updateBook")
     deleteBook(id: ID!): MessagePayload @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@deleteBook")
@@ -129,6 +132,12 @@ input RegisterInput {
 
 input LoginInput {
     email: String!
+    password: String!
+}
+
+input ResetPasswordInput {
+    email: String!
+    token: String!
     password: String!
 }
 

@@ -96,8 +96,8 @@ class LibraryQuery
         $auth = auth('api')->user();
         $userId = (int) $args['user_id'];
 
-        if ($auth && !$auth->is_admin && (int) $auth->id !== $userId) {
-            throw new \Exception('Forbidden');
+        if (!$auth) {
+            throw new \Exception('Não autorizado.');
         }
 
         $fav = Favorite::where('user_id', $userId)->first();
