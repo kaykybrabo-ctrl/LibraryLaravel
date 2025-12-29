@@ -2050,8 +2050,18 @@ async handleResetPassword() {
                 try {
                     this.authorsLoading = true;
                     const data = await this.graphql('query Authors { authors { id name bio photo books { id title description photo } } }');
-                    const list = data && Array.isArray(data.authors) ? data.authors : [];
-                    this.authors = list;
+                    const raw = data && Array.isArray(data.authors) ? data.authors : [];
+                    const byName = {};
+                    for (const a of raw) {
+                        const key = a && a.name ? a.name : '';
+                        const current = byName[key];
+                        const currentCount = current && Array.isArray(current.books) ? current.books.length : 0;
+                        const nextCount = a && Array.isArray(a.books) ? a.books.length : 0;
+                        if (!current || nextCount > currentCount) {
+                            byName[key] = a;
+                        }
+                    }
+                    this.authors = Object.values(byName);
                 } catch (e) {
                     this.authors = [];
                     this.errorMessage = '❌ Não foi possível carregar autores. Tente novamente.';
