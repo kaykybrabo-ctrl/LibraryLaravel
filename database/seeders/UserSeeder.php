@@ -19,15 +19,5 @@ class UserSeeder extends Seeder
                 'photo' => 'https://res.cloudinary.com/ddfgsoh5g/image/upload/pedbook/profiles/default-user',
             ]
         );
-
-        User::updateOrCreate(
-            ['email' => 'kaue@gmail.com'],
-            [
-                'name' => 'Kaue',
-                'password' => Hash::make('123'),
-                'is_admin' => false,
-                'photo' => 'https://res.cloudinary.com/ddfgsoh5g/image/upload/pedbook/profiles/default-user',
-            ]
-        );
     }
 }
