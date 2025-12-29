@@ -7,14 +7,14 @@ use Illuminate\Support\Facades\Log;
 it('logs a book due notification with correct context', function () {
     $loan = Loan::factory()->create();
 
-    Log::fake();
+    Log::shouldReceive('info')
+        ->once()
+        ->withArgs(function ($message, $context) use ($loan) {
+            return $message === 'book_due_notification'
+                && ($context['user_id'] ?? null) === $loan->user_id
+                && ($context['book_id'] ?? null) === $loan->book_id;
+        });
 
     $job = new SendBookDueNotification($loan->id);
-    $job->handle();
-
-    Log::assertLogged('info', function ($log) use ($loan) {
-        return $log->message === 'book_due_notification'
-            && ($log->context['user_id'] ?? null) === $loan->user_id
-            && ($log->context['book_id'] ?? null) === $loan->book_id;
-    });
+    $job->handle(app(\App\Services\Notifications\BookDueNotificationStrategy::class));
 });

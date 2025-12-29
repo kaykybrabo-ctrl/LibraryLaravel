@@ -59,7 +59,7 @@ class Loan extends Model
             }
             $today = now()->startOfDay();
             $due = $this->return_date->copy()->startOfDay();
-            return $today->diffInDays($due, false);
+            return (int) $today->diffInDays($due, false);
         });
     }
 }
