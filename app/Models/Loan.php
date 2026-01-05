@@ -1,31 +1,25 @@
 <?php
-
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class Loan extends Model
 {
-    use HasFactory;
-
+    use HasFactory, SoftDeletes;
     protected $fillable = ['user_id', 'book_id', 'loan_date', 'return_date', 'returned_at'];
     protected $hidden = ['created_at', 'updated_at'];
     protected $casts = ['loan_date' => 'date', 'return_date' => 'date', 'returned_at' => 'date'];
     protected $appends = ['status', 'is_overdue', 'days_remaining'];
-
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class)->withTrashed();
     }
-
     public function book(): BelongsTo
     {
-        return $this->belongsTo(Book::class);
+        return $this->belongsTo(Book::class)->withTrashed();
     }
-
     protected function status(): Attribute
     {
         return Attribute::get(function () {
@@ -38,7 +32,6 @@ class Loan extends Model
             return 'active';
         });
     }
-
     protected function isOverdue(): Attribute
     {
         return Attribute::get(function () {
@@ -50,7 +43,6 @@ class Loan extends Model
             return $due->lt($today);
         });
     }
-
     protected function daysRemaining(): Attribute
     {
         return Attribute::get(function () {

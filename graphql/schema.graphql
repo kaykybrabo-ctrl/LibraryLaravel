@@ -5,6 +5,7 @@ scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Date
 type Query {
     books(all: Boolean, per_page: Int): [Book!]! @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@books")
     book(id: ID!): Book @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@book")
+    deletedBooks: [Book!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@deletedBooks")
     authors: [Author!]! @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@authors")
     author(id: ID!): Author @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@author")
     users(per_page: Int): [User!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@users")
@@ -16,6 +17,7 @@ type Query {
     reviewsByBook(book_id: ID!): [Review!]! @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@reviewsByBook")
     myOrders: [Order!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@myOrders")
     orders: [Order!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@orders")
+    myCart: [CartItem!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@myCart")
 }
 
 "Account of a person who uses this application."
@@ -45,7 +47,7 @@ type User {
  
 
 type Mutation {
-    register(input: RegisterInput!): AuthPayload @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@register")
+    register(input: RegisterInput!): RegisterPayload @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@register")
     login(input: LoginInput!): AuthPayload @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@login")
     logout: MessagePayload @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@logout")
 
@@ -55,6 +57,7 @@ type Mutation {
     createBook(input: CreateBookInput!): Book @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@createBook")
     updateBook(id: ID!, input: UpdateBookInput!): Book @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@updateBook")
     deleteBook(id: ID!): MessagePayload @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@deleteBook")
+    restoreBook(id: ID!): Book @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@restoreBook")
 
     createAuthor(input: CreateAuthorInput!): Author @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@createAuthor")
     updateAuthor(id: ID!, input: UpdateAuthorInput!): Author @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@updateAuthor")
@@ -77,6 +80,10 @@ type Mutation {
         @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@uploadImage")
 
     checkout(input: CheckoutInput!): Order @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@checkout")
+
+    upsertCartItem(book_id: ID!, quantity: Int!): CartItem @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@upsertCartItem")
+    removeCartItem(book_id: ID!): MessagePayload @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@removeCartItem")
+    clearCart: MessagePayload @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@clearCart")
 }
 
 type Author {
@@ -141,7 +148,20 @@ type Review {
     book: Book! @belongsTo
 }
 
+type CartItem {
+    id: ID!
+    user_id: ID!
+    book_id: ID!
+    quantity: Int!
+    book: Book! @belongsTo
+}
+
 type MessagePayload {
+    message: String!
+}
+
+type RegisterPayload {
+    user: User!
     message: String!
 }
 

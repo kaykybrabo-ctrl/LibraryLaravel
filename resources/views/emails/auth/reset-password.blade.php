@@ -1,16 +1,16 @@
 @component('mail::message')
-# Redefinir senha
+# Redefinição de senha
 
 Olá {{ $user->name }},
 
-Você solicitou a redefinição da sua senha no **PedBook**.
+Recebemos uma solicitação para redefinir a sua senha no **PedBook**.
 
 @component('mail::button', ['url' => $url])
 Redefinir senha
 @endcomponent
 
-Se você não solicitou esta redefinição, pode ignorar este e-mail.
+Se você não solicitou esta alteração, você pode ignorar este e-mail com segurança.
 
-Obrigado,  
+Obrigado,
 {{ config('app.name', 'PedBook') }}
 @endcomponent

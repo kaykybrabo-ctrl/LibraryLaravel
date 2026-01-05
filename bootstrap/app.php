@@ -1,8 +1,8 @@
 <?php
-
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Contracts\Console\Kernel as ConsoleKernelContract;
 use App\Providers\AuthServiceProvider;
 use App\Providers\AppServiceProvider;
 use PHPOpenSourceSaver\JWTAuth\Providers\LaravelServiceProvider as JWTServiceProvider;
@@ -27,6 +27,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'jwt.refresh' => \PHPOpenSourceSaver\JWTAuth\Http\Middleware\RefreshToken::class,
         ]);
     })
+    ->withBindings([
+        ConsoleKernelContract::class => \App\Console\Kernel::class,
+    ])
     ->withExceptions(function (Exceptions $exceptions) {
     })
     ->create();

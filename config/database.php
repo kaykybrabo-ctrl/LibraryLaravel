@@ -1,8 +1,6 @@
 <?php
-
 return [
     'default' => env('DB_CONNECTION', 'sqlite'),
-
     'connections' => [
         'sqlite' => [
             'driver' => 'sqlite',
@@ -12,7 +10,6 @@ return [
             'foreign_key_constraints' => true,
         ],
     ],
-
     'migrations' => 'migrations',
     'redis' => [
         'client' => env('REDIS_CLIENT', 'phpredis'),

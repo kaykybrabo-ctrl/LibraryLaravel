@@ -8,6 +8,11 @@ services:
       - "8080:8080"
     volumes:
       - ./:/app
+    depends_on:
+      - redis
+      - rabbitmq
+    env_file:
+      - .env
     environment:
       - APP_ENV=local
       - APP_DEBUG=1
@@ -19,7 +24,19 @@ services:
       - REDIS_CLIENT=phpredis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
       - ALWAYS_FRESH=true
+    restart: unless-stopped
+
+  vite:
+    image: node:20-alpine
+    container_name: library_laravel_vite
+    working_dir: /app
+    volumes:
+      - ./:/app
+    ports:
+      - "5173:5173"
+    command: sh -lc "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
     restart: unless-stopped
 
   redis:
@@ -29,6 +46,28 @@ services:
       - "6379:6379"
     restart: unless-stopped
 
+  mailpit:
+    profiles:
+      - dev
+    image: axllent/mailpit:latest
+    container_name: library_laravel_mailpit
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: library_laravel_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-guest}
+      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_VHOST:-/}
+    restart: unless-stopped
+
   queue:
     container_name: library_laravel_queue
     build:
@@ -36,6 +75,9 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - redis
+      - rabbitmq
+    env_file:
+      - .env
     volumes:
       - ./:/app
     environment:
@@ -49,8 +91,45 @@ services:
       - REDIS_CLIENT=phpredis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-    command: sh -lc "php artisan queue:work --verbose --tries=1 --timeout=90"
+      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
+    command: sh -lc "php artisan queue:work --verbose --tries=3 --backoff=10 --sleep=1 --timeout=90"
     restart: unless-stopped
+
+  cli:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - redis
+      - rabbitmq
+    profiles:
+      - tools
+    volumes:
+      - ./:/app
+    working_dir: /app
+    env_file:
+      - .env
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=1
+      - APP_URL=http://localhost:8080
+      - DB_CONNECTION=sqlite
+      - DB_DATABASE=/app/database/database.sqlite
+      - CACHE_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+      - REDIS_CLIENT=phpredis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
+      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
+      - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
+      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+      - RABBITMQ_DUE_QUEUE=${RABBITMQ_DUE_QUEUE:-due_notifications}
+      - RABBITMQ_CART_QUEUE=${RABBITMQ_CART_QUEUE:-cart_engagement}
+    entrypoint: ["sh", "-lc"]
+    command: ["php -v"]
 
   scheduler:
     container_name: library_laravel_scheduler
@@ -59,6 +138,9 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - redis
+      - rabbitmq
+    env_file:
+      - .env
     volumes:
       - ./:/app
     environment:
@@ -72,5 +154,74 @@ services:
       - REDIS_CLIENT=phpredis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
     command: sh -lc "php artisan schedule:work"
+    restart: unless-stopped
+
+  rabbitmq_due_consumer:
+    container_name: library_laravel_rabbitmq_due_consumer
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+      - redis
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=1
+      - APP_URL=http://localhost:8080
+      - DB_CONNECTION=sqlite
+      - DB_DATABASE=/app/database/database.sqlite
+      - CACHE_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+      - REDIS_CLIENT=phpredis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
+      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
+      - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
+      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+      - RABBITMQ_DUE_QUEUE=${RABBITMQ_DUE_QUEUE:-due_notifications}
+      - RABBITMQ_CART_QUEUE=${RABBITMQ_CART_QUEUE:-cart_engagement}
+    command: sh -lc "until php -r 'exit(@fsockopen(getenv(\"RABBITMQ_HOST\")?:\"rabbitmq\", (int)(getenv(\"RABBITMQ_PORT\")?:5672))?0:1);'; do echo 'waiting for rabbitmq...'; sleep 1; done; php artisan rabbitmq:consume-due"
+    restart: unless-stopped
+
+  rabbitmq_cart_consumer:
+    container_name: library_laravel_rabbitmq_cart_consumer
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+      - redis
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+    environment:
+      - APP_ENV=local
+      - APP_DEBUG=1
+      - APP_URL=http://localhost:8080
+      - DB_CONNECTION=sqlite
+      - DB_DATABASE=/app/database/database.sqlite
+      - CACHE_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+      - REDIS_CLIENT=phpredis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
+      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
+      - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
+      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
+      - RABBITMQ_DUE_QUEUE=${RABBITMQ_DUE_QUEUE:-due_notifications}
+      - RABBITMQ_CART_QUEUE=${RABBITMQ_CART_QUEUE:-cart_engagement}
+    command: sh -lc "until php -r 'exit(@fsockopen(getenv(\"RABBITMQ_HOST\")?:\"rabbitmq\", (int)(getenv(\"RABBITMQ_PORT\")?:5672))?0:1);'; do echo 'waiting for rabbitmq...'; sleep 1; done; php artisan rabbitmq:consume-cart"
     restart: unless-stopped

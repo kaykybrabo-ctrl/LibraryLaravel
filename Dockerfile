@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install zip pdo pdo_sqlite
+RUN docker-php-ext-install zip pdo pdo_sqlite sockets
 RUN pecl install redis \
     && docker-php-ext-enable redis
 
@@ -19,7 +19,8 @@ WORKDIR /app
 
 COPY . /app
 
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader || true
+RUN composer clear-cache || true
+RUN composer install --no-interaction --prefer-source --optimize-autoloader || true
 
 RUN mkdir -p storage/logs bootstrap/cache database && \
     chmod -R 777 storage bootstrap/cache || true

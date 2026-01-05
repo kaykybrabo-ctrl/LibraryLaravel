@@ -1,28 +1,22 @@
 <?php
-
 return [
     'default' => 'file',
-
     'stores' => [
         'file' => [
             'driver' => 'file',
             'path' => storage_path('framework/cache/data'),
         ],
-
         'redis' => [
             'driver' => 'redis',
             'connection' => 'default',
         ],
-
         'array' => [
             'driver' => 'array',
             'serialize' => false,
         ],
-
         'null' => [
             'driver' => 'null',
         ],
     ],
-
     'prefix' => env('CACHE_PREFIX', 'laravel_cache_'),
 ];

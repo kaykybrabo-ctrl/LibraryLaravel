@@ -15,11 +15,20 @@ mkdir -p \
   /app/bootstrap/cache
 chmod -R 777 /app/storage /app/bootstrap/cache || true
 
-if [ ! -d /app/vendor ]; then
-  composer install --no-interaction --prefer-dist --optimize-autoloader || true
+git config --global --add safe.directory /app >/dev/null 2>&1 || true
+
+if [ ! -f /app/vendor/autoload.php ] || [ ! -d /app/vendor/php-amqplib/php-amqplib ]; then
+  composer clear-cache || true
+  composer install --no-dev --no-interaction --prefer-source --optimize-autoloader || true
 fi
 
-php artisan key:generate --force || true
+if [ "$#" -gt 0 ]; then
+  exec "$@"
+fi
+
+if [ -f /app/.env ] && grep -q '^APP_KEY=$' /app/.env; then
+  php artisan key:generate --force || true
+fi
 
 php artisan optimize:clear || true
 
@@ -33,4 +42,5 @@ else
   php artisan db:seed --force
 fi
 
-exec php artisan serve --host=0.0.0.0 --port=8080
+cd public
+exec php -S 0.0.0.0:8080 ../vendor/laravel/framework/src/Illuminate/Foundation/resources/server.php
