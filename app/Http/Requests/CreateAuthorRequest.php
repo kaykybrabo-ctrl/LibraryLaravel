@@ -18,11 +18,11 @@ class CreateAuthorRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'O nome do autor é obrigatório.',
-            'name.max' => 'O nome do autor não pode ter mais de 255 caracteres.',
-            'name.unique' => 'Já existe um autor com este nome.',
-            'bio.max' => 'A biografia não pode ter mais de 2000 caracteres.',
-            'photo.max' => 'A URL da foto não pode ter mais de 500 caracteres.',
+            'name.required' => __('validation.custom.name.required'),
+            'name.max' => __('validation.custom.name.max'),
+            'name.unique' => __('validation.custom.name.unique'),
+            'bio.max' => __('validation.custom.bio.max'),
+            'photo.max' => __('validation.custom.photo.max'),
         ];
     }
 }

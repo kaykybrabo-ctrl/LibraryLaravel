@@ -1,7 +1,7 @@
 <template>
   <div class="rent-modal">
     <div class="modal-header">
-      <h3>Alugar Livro</h3>
+      <h3>{{ $t('books.rentBookTitle') }}</h3>
       <button @click="$emit('close')" class="close-btn">&times;</button>
     </div>
     
@@ -10,14 +10,14 @@
         <img :src="book.photo || '/images/default-book.jpg'" :alt="book.title" class="book-cover" />
         <div class="book-details">
           <h4>{{ book.title }}</h4>
-          <p class="author">por {{ book.author ? book.author.name : 'Autor desconhecido' }}</p>
-          <p class="description">{{ book.description || 'Sem descrição disponível.' }}</p>
+          <p class="author">{{ $t('common.by') }} {{ book.author ? book.author.name : $t('books.unknownAuthor') }}</p>
+          <p class="description">{{ book.description || $t('books.noDescription') }}</p>
         </div>
       </div>
       
       <div class="rent-form">
         <div class="form-group">
-          <label for="return-date">Data de Devolução</label>
+          <label for="return-date">{{ $t('loans.returnDate') }}</label>
           <input 
             id="return-date"
             v-model="returnDate" 
@@ -28,19 +28,19 @@
         </div>
         
         <div class="form-group">
-          <label for="notes">Observações</label>
+          <label for="notes">{{ $t('modals.rent.notesLabel') }}</label>
           <textarea 
             id="notes"
             v-model="notes" 
-            placeholder="Observações opcionais..."
+            :placeholder="$t('modals.rent.notesPlaceholder')"
             rows="3"
           ></textarea>
         </div>
       </div>
       
       <div class="rent-actions">
-        <button @click="$emit('close')" class="btn btn-outline">Cancelar</button>
-        <button @click="confirmRent" class="btn btn-primary">Confirmar Aluguel</button>
+        <button @click="$emit('close')" class="btn btn-outline">{{ $t('common.cancel') }}</button>
+        <button @click="confirmRent" class="btn btn-primary">{{ $t('books.confirmRent') }}</button>
       </div>
     </div>
   </div>

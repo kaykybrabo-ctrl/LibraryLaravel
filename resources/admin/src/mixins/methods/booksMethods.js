@@ -3,6 +3,9 @@ export default {
     changePage(page) {
       if (page >= 1 && page <= this.totalPages) {
         this.booksPage = page;
+        if (typeof this.loadBooks === 'function') {
+          this.loadBooks();
+        }
         if (typeof window !== 'undefined') {
           window.scrollTo(0, 0);
         }
@@ -12,6 +15,9 @@ export default {
     changeAuthorsPage(page) {
       if (page >= 1 && page <= this.totalAuthorsPages) {
         this.authorsPage = page;
+        if (typeof this.loadAuthorsPage === 'function') {
+          this.loadAuthorsPage();
+        }
         if (typeof window !== 'undefined') {
           window.scrollTo(0, 0);
         }
@@ -44,6 +50,10 @@ export default {
       this.routePage = 'book-detail';
       if (typeof window !== 'undefined') {
         window.location.hash = `book/${book.id}`;
+      }
+
+      if (typeof this.loadBookReviews === 'function') {
+        this.loadBookReviews(book && book.id ? book.id : null);
       }
     },
   },

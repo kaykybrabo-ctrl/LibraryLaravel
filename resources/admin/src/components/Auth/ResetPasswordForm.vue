@@ -1,11 +1,11 @@
 <template>
   <div>
-    <h2 v-if="!resetToken">Recuperar senha</h2>
-    <h2 v-else>Definir nova senha</h2>
+    <h2 v-if="!resetToken">{{ $t('auth.recoverPasswordTitle') }}</h2>
+    <h2 v-else>{{ $t('auth.setNewPasswordTitle') }}</h2>
 
     <form v-if="!resetToken" @submit.prevent="$emit('requestReset')">
       <div class="form-group">
-        <label>Email cadastrado:</label>
+        <label>{{ $t('auth.registeredEmail') }}:</label>
         <input
           type="email"
           :value="forgotEmail"
@@ -14,16 +14,16 @@
         >
       </div>
       <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 4px;">
-        Enviar link de redefinição
+        {{ $t('auth.sendResetLink') }}
       </button>
     </form>
 
     <form v-else @submit.prevent="$emit('submitNewPassword')">
       <p style="margin-bottom:10px; font-size:0.9rem; color:#555;">
-        E-mail: <strong>{{ resetEmail }}</strong>
+        {{ $t('auth.email') }}: <strong>{{ resetEmail }}</strong>
       </p>
       <div class="form-group">
-        <label>Nova senha:</label>
+        <label>{{ $t('auth.newPassword') }}:</label>
         <div style="display:flex; gap:8px; align-items:center;">
           <input
             :type="resetPasswordVisible ? 'text' : 'password'"
@@ -38,13 +38,13 @@
             style="white-space: nowrap;"
             @click="$emit('update:resetPasswordVisible', !resetPasswordVisible)"
           >
-            {{ resetPasswordVisible ? 'Ocultar' : 'Mostrar' }}
+            {{ resetPasswordVisible ? $t('auth.hidePassword') : $t('auth.showPassword') }}
           </button>
         </div>
       </div>
 
       <div class="form-group">
-        <label>Confirmar nova senha:</label>
+        <label>{{ $t('auth.confirmNewPassword') }}:</label>
         <div style="display:flex; gap:8px; align-items:center;">
           <input
             :type="resetPasswordConfirmVisible ? 'text' : 'password'"
@@ -59,25 +59,25 @@
             style="white-space: nowrap;"
             @click="$emit('update:resetPasswordConfirmVisible', !resetPasswordConfirmVisible)"
           >
-            {{ resetPasswordConfirmVisible ? 'Ocultar' : 'Mostrar' }}
+            {{ resetPasswordConfirmVisible ? $t('auth.hidePassword') : $t('auth.showPassword') }}
           </button>
         </div>
       </div>
 
       <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 4px;">
-        Salvar nova senha
+        {{ $t('auth.saveNewPassword') }}
       </button>
     </form>
 
     <p class="text-center mt-3">
-      <a href="#" @click.prevent="$emit('backToLogin')">Voltar para login</a>
+      <a href="#" @click.prevent="$emit('backToLogin')">{{ $t('auth.backToLogin') }}</a>
     </p>
     <button
       class="btn btn-secondary"
       style="margin-top: 10px; width: 100%;"
       @click="$emit('goToLanding')"
     >
-      ← Voltar para Home
+      {{ $t('auth.backToHome') }}
     </button>
   </div>
 </template>

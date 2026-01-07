@@ -49,6 +49,14 @@ export default {
 
           let normalized = v;
 
+          const defaultPublicIdByKind = {
+            user: 'pedbook/profiles/default-user.svg',
+            author: 'pedbook/profiles/default-author.svg',
+            book: 'pedbook/books/default-book.svg',
+          };
+          const defaultPublicId = defaultPublicIdByKind[kind] || defaultPublicIdByKind.book;
+          const defaultTransform = `d_${String(defaultPublicId).replace(/\//g, ':')}`;
+
           const uploadMarker = normalized.includes('/image/upload/') ? '/image/upload/' : '/upload/';
           const after = normalized.split(uploadMarker)[1] || '';
           const first = after.split('/')[0] || '';
@@ -57,7 +65,7 @@ export default {
           if (w && h && !hasTransform) {
             normalized = normalized.replace(
               uploadMarker,
-              `${uploadMarker}c_fill,w_${Math.round(w)},h_${Math.round(h)},q_auto,f_auto/`
+              `${uploadMarker}c_fill,w_${Math.round(w)},h_${Math.round(h)},q_auto,f_auto,${defaultTransform}/`
             );
           }
 

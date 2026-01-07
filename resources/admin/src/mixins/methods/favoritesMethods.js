@@ -17,7 +17,8 @@ export default {
       if (!this.userFavoriteBook) return;
       try {
         await this.graphql(
-          'mutation RemoveFavorite { removeFavorite }'
+          'mutation RemoveFavorite($userId: ID!) { removeFavorite(user_id: $userId) { message } }',
+          { userId: this.currentUser ? this.currentUser.id : null }
         );
         this.userFavoriteBook = null;
       } catch (e) {

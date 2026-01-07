@@ -2,7 +2,7 @@
   <div class="register-form">
     <form @submit.prevent="handleSubmit">
       <div class="form-group">
-        <label for="name">Nome</label>
+        <label for="name">{{ $t('auth.name') }}</label>
         <input
           id="name"
           v-model="form.name"
@@ -13,7 +13,7 @@
       </div>
       
       <div class="form-group">
-        <label for="email">Email</label>
+        <label for="email">{{ $t('auth.email') }}</label>
         <input
           id="email"
           v-model="form.email"
@@ -24,7 +24,7 @@
       </div>
       
       <div class="form-group">
-        <label for="password">Senha</label>
+        <label for="password">{{ $t('auth.password') }}</label>
         <div class="password-input">
           <input
             id="password"
@@ -38,13 +38,13 @@
             class="toggle-password"
             @click="showPassword = !showPassword"
           >
-            {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+            {{ showPassword ? $t('auth.hidePassword') : $t('auth.showPassword') }}
           </button>
         </div>
       </div>
       
       <div class="form-group">
-        <label for="password_confirmation">Confirmar Senha</label>
+        <label for="password_confirmation">{{ $t('auth.confirmPassword') }}</label>
         <input
           id="password_confirmation"
           v-model="form.password_confirmation"
@@ -59,8 +59,8 @@
       </div>
 
       <button type="submit" class="btn btn-primary" :disabled="loading">
-        <LoadingSpinner v-if="loading" text="Cadastrando..." />
-        <span v-else>Cadastrar</span>
+        <LoadingSpinner v-if="loading" :text="$t('auth.registering')" />
+        <span v-else>{{ $t('auth.register') }}</span>
       </button>
     </form>
   </div>
@@ -113,10 +113,10 @@ export default {
           this.$emit('success', response.data.data.register.user);
           this.form = { name: '', email: '', password: '', password_confirmation: '' };
         } else {
-          this.error = response.data.errors[0].message || 'Erro ao cadastrar';
+          this.error = response.data.errors[0].message || this.$t('errors.registerFailed');
         }
       } catch (error) {
-        this.error = 'Erro de conexão. Tente novamente.';
+        this.error = this.$t('errors.networkError');
       } finally {
         this.loading = false;
       }

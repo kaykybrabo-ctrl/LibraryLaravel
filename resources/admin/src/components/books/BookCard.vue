@@ -1,17 +1,22 @@
 <template>
   <div class="book-card">
     <div class="book-cover">
-      <img :src="book.photo" :alt="book.title" />
+      <img
+        :src="thumb ? thumb(book.photo, 600, 360, 'book') : book.photo"
+        :alt="book.title"
+        @error="$event.target.src = (thumb ? thumb('', 600, 360, 'book') : 'https://res.cloudinary.com/ddfgsoh5g/image/upload/v1761062932/pedbook/books/default-book.svg')"
+        loading="lazy"
+      />
     </div>
     
     <div class="book-info">
       <h3 class="book-title">{{ book.title }}</h3>
       <p class="book-author">{{ book.author?.name }}</p>
-      <p class="book-price">R$ {{ book.price?.toFixed(2) }}</p>
+      <p class="book-price">{{ $formatCurrency(Number(book.price || 0)) }}</p>
       
       <div class="book-actions">
         <button class="btn btn-sm btn-outline" @click="$emit('view', book)">
-          Ver Detalhes
+          {{ $t('books.details') }}
         </button>
         
         <button 
@@ -19,21 +24,21 @@
           class="btn btn-sm btn-primary"
           @click="$emit('borrow', book)"
         >
-          Alugar
+          {{ $t('books.rent') }}
         </button>
         
         <button 
           class="btn btn-sm btn-secondary"
           @click="$emit('addToCart', book)"
         >
-          🛒 Carrinho
+          {{ $t('books.addToCart') }}
         </button>
         
         <button 
           class="btn btn-sm btn-outline"
           @click="$emit('toggleFavorite', book)"
         >
-          {{ book.isFavorited ? '❤️' : '🤍' }}
+          {{ book.isFavorited ? $t('books.removeFromFavorites') : $t('books.addToFavorites') }}
         </button>
       </div>
     </div>
@@ -47,7 +52,11 @@ export default {
     book: {
       type: Object,
       required: true
-    }
+    },
+    thumb: {
+      type: Function,
+      default: null,
+    },
   },
   emits: ['view', 'borrow', 'addToCart', 'toggleFavorite']
 }

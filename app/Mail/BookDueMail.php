@@ -23,7 +23,7 @@ class BookDueMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Lembrete de devolução - PedBook',
+            subject: __('messages.book_due_subject'),
         );
     }
     public function content(): Content

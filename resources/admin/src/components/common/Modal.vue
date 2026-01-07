@@ -11,8 +11,8 @@
         </div>
         <div class="modal-footer" v-if="showFooter">
           <slot name="footer">
-            <button class="btn btn-secondary" @click="$emit('close')">Cancelar</button>
-            <button class="btn btn-primary" @click="$emit('confirm')">Confirmar</button>
+            <button class="btn btn-secondary" @click="$emit('close')">{{ $t('common.cancel') }}</button>
+            <button class="btn btn-primary" @click="$emit('confirm')">{{ $t('common.confirm') }}</button>
           </slot>
         </div>
       </div>

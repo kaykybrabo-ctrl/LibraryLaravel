@@ -27,7 +27,8 @@ class SendCartEngagementEmail implements ShouldQueue
     public function handle(): void
     {
         $user = User::find($this->userId);
-        if (!$user || empty($user->email) || !empty($user->is_admin)) {
+        $isAdmin = $user ? (bool) ($user->is_admin ?? false) : false;
+        if (!$user || empty($user->email) || $isAdmin) {
             return;
         }
 

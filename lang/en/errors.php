@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'unauthenticated' => 'Unauthenticated.',
+    'forbidden' => 'Forbidden.',
+    'not_found' => 'Resource not found.',
+    'validation_failed' => 'The given data was invalid.',
+    'invalid_credentials' => 'Invalid credentials.',
+    'register_failed' => 'Failed to register user. Please try again.',
+    'create_book_failed' => 'Failed to create book. Please try again.',
+    'admin_cannot_rent' => 'Admins cannot rent books.',
+    'book_already_borrowed' => 'Book is already borrowed.',
+    'access_not_allowed' => 'Access not allowed.',
+    'admin_cannot_favorite' => 'Admins cannot favorite books.',
+    'admin_cannot_review' => 'Admins cannot create reviews.',
+    'missing_image_data' => 'Missing image data.',
+    'invalid_upload_target' => 'Invalid upload target.',
+    'invalid_image_file' => 'Only image files are allowed.',
+    'invalid_image_data' => 'Invalid image data.',
+    'cloudinary_upload_failed' => 'Upload failed.',
+    'cloudinary_invalid_response' => 'Invalid upload response.',
+    'admin_cannot_checkout' => 'Admins cannot checkout.',
+    'admin_cannot_add_to_cart' => 'Admins cannot add items to cart.',
+    'invalid_token' => 'Invalid or expired token.',
+    'user_not_found' => 'User not found.',
+];

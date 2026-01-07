@@ -81,8 +81,9 @@ class BookActionsTest extends TestCase
     }
     public function test_create_book_action_handles_database_errors()
     {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Failed to create book. Please try again.');
+        app()->setLocale('en');
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage(__('errors.create_book_failed'));
         $action = new CreateBookAction();
         $invalidData = [
             'title' => 'Test Book',

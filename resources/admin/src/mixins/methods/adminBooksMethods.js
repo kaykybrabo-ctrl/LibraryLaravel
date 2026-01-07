@@ -25,10 +25,10 @@ export default {
     askRestoreBook(bookId) {
       const id = Number(bookId);
       if (!id) return;
-      this.confirmTitle = 'Restaurar Livro';
-      this.confirmMessage = 'Deseja restaurar este livro?';
-      this.confirmConfirmLabel = 'Restaurar';
-      this.confirmCancelLabel = 'Cancelar';
+      this.confirmTitle = `${this.$t('common.restore')} ${this.$t('entities.book')}`;
+      this.confirmMessage = this.$t('common.confirmRestoreBook');
+      this.confirmConfirmLabel = this.$t('common.restore');
+      this.confirmCancelLabel = this.$t('common.cancel');
       this.confirmIsDanger = false;
       this.confirmCallback = () => this.restoreBookAdmin(id);
       this.showConfirmModal = true;
@@ -79,23 +79,29 @@ export default {
       try {
         this.newBookError = '';
         if (!this.newBook.title || !this.newBook.author_id) {
-          this.newBookError = 'Título e autor são obrigatórios.';
+          this.newBookError = this.$t('errors.titleAndAuthorRequired');
           return;
         }
-        const variables = { ...this.newBook };
+        const input = {
+          title: this.newBook.title,
+          description: this.newBook.description,
+          photo: this.newBook.photo,
+          price: this.newBook.price,
+          author_id: this.newBook.author_id,
+        };
         if (this.newBookAuthorMode === 'new') {
-          variables.new_author_name = this.newBook.author_id;
-          variables.author_id = null;
+          input.author_name = this.newBook.author_id;
+          input.author_id = null;
         }
         await this.graphql(
-          'mutation CreateBook($title: String!, $authorId: ID, $newAuthorName: String, $description: String, $photo: String, $price: Float) { createBook(title: $title, author_id: $authorId, new_author_name: $newAuthorName, description: $description, photo: $photo, price: $price) { id } }',
-          variables
+          'mutation CreateBook($input: CreateBookInput!) { createBook(input: $input) { id } }',
+          { input }
         );
         await this.loadBooks();
         await this.loadAuthors();
         this.closeCreateBookModal();
       } catch (e) {
-        this.newBookError = 'Erro ao criar livro.';
+        this.newBookError = this.$t('errors.bookCreateError');
       }
     },
 
@@ -120,14 +126,16 @@ export default {
       try {
         if (!this.editBook || !this.editBook.title || !this.editBook.author_id) return;
         await this.graphql(
-          'mutation UpdateBook($id: ID!, $title: String!, $authorId: ID!, $description: String, $photo: String, $price: Float) { updateBook(id: $id, title: $title, author_id: $authorId, description: $description, photo: $photo, price: $price) { id } }',
+          'mutation UpdateBook($id: ID!, $input: UpdateBookInput!) { updateBook(id: $id, input: $input) { id } }',
           {
             id: this.editBook.id,
-            title: this.editBook.title,
-            authorId: this.editBook.author_id,
-            description: this.editBook.description,
-            photo: this.editBook.photo,
-            price: this.editBook.price,
+            input: {
+              title: this.editBook.title,
+              author_id: this.editBook.author_id,
+              description: this.editBook.description,
+              photo: this.editBook.photo,
+              price: this.editBook.price,
+            },
           }
         );
         await this.loadBooks();
@@ -141,7 +149,7 @@ export default {
     async deleteBook(bookId) {
       try {
         await this.graphql(
-          'mutation DeleteBook($id: ID!) { deleteBook(id: $id) }',
+          'mutation DeleteBook($id: ID!) { deleteBook(id: $id) { message } }',
           { id: bookId }
         );
         await this.loadBooks();

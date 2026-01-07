@@ -1,5 +1,30 @@
 export default {
   methods: {
+    resetFiltersState() {
+      this.searchQuery = '';
+      this.sortKey = 'recent';
+      this.authorFilterId = '';
+      this.booksPage = 1;
+      this.booksPerPage = 5;
+      this.itemsPerPage = 5;
+
+      this.authorsSearchQuery = '';
+      this.authorsSortKey = 'name';
+      this.authorsPage = 1;
+      this.authorsPerPage = 5;
+
+      this.selectedBook = null;
+      this.selectedAuthor = null;
+
+      this.bookReviews = [];
+      this.bookReviewsLoading = false;
+
+      this.adminBooksMode = 'active';
+      this.adminAuthorsMode = 'active';
+      this.deletedBooksSortKey = 'recent';
+      this.deletedAuthorsSortKey = 'recent';
+    },
+
     async handleLogin() {
       try {
         this.errorMessage = '';
@@ -15,7 +40,12 @@ export default {
           this.currentUser = data.login.user;
           localStorage.setItem('authToken', this.authToken);
           localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
-          this.successMessage = '✅ Login realizado com sucesso!';
+
+          if (typeof this.resetFiltersState === 'function') {
+            this.resetFiltersState();
+          }
+
+          this.successMessage = this.$t('messages.loginSuccess');
           this.errorMessage = '';
           this.loginForm.email = '';
           this.loginForm.password = '';
@@ -29,11 +59,11 @@ export default {
           await this.loadUserLoans();
           await this.loadFavoriteBook();
         } else {
-          this.errorMessage = '❌ Credenciais inválidas.';
+          this.errorMessage = this.$t('errors.invalidCredentials');
           this.successMessage = '';
         }
       } catch (e) {
-        this.errorMessage = '❌ Erro ao fazer login: ' + (e.message || 'Erro desconhecido');
+        this.errorMessage = `${this.$t('errors.serverError')} ${e && e.message ? e.message : ''}`.trim();
         this.successMessage = '';
       }
     },
@@ -44,7 +74,7 @@ export default {
         this.successMessage = '';
 
         if (this.registerForm.password !== this.registerForm.password_confirmation) {
-          this.errorMessage = '❌ Senhas não conferem.';
+          this.errorMessage = this.$t('errors.passwordMismatch');
           return;
         }
 
@@ -60,7 +90,7 @@ export default {
         );
 
         if (data && data.register) {
-          this.successMessage = '✅ Registro realizado com sucesso! Faça login para continuar.';
+          this.successMessage = this.$t('messages.registerSuccess');
           this.errorMessage = '';
           this.registerForm.name = '';
           this.registerForm.email = '';
@@ -72,11 +102,11 @@ export default {
             window.location.hash = 'login';
           }
         } else {
-          this.errorMessage = '❌ Erro ao registrar. Tente novamente.';
+          this.errorMessage = this.$t('errors.serverError');
           this.successMessage = '';
         }
       } catch (e) {
-        this.errorMessage = '❌ Erro ao registrar: ' + (e.message || 'Erro desconhecido');
+        this.errorMessage = `${this.$t('errors.serverError')} ${e && e.message ? e.message : ''}`.trim();
         this.successMessage = '';
       }
     },
@@ -87,7 +117,7 @@ export default {
         this.successMessage = '';
 
         if (!this.forgotEmail) {
-          this.errorMessage = '❌ Email é obrigatório.';
+          this.errorMessage = this.$t('errors.emailRequired');
           return;
         }
 
@@ -97,15 +127,15 @@ export default {
         );
 
         if (data && data.requestPasswordReset) {
-          this.successMessage = '✅ Solicitação enviada! Verifique o link gerado nos logs do backend (modo dev).';
+          this.successMessage = this.$t('messages.passwordResetEmailSent');
           this.errorMessage = '';
           this.forgotEmail = '';
         } else {
-          this.errorMessage = '❌ Erro ao solicitar recuperação. Verifique o email.';
+          this.errorMessage = this.$t('errors.serverError');
           this.successMessage = '';
         }
       } catch (e) {
-        this.errorMessage = '❌ Erro: ' + (e.message || 'Erro desconhecido');
+        this.errorMessage = `${this.$t('errors.serverError')} ${e && e.message ? e.message : ''}`.trim();
         this.successMessage = '';
       }
     },
@@ -116,12 +146,12 @@ export default {
         this.successMessage = '';
 
         if (!this.resetToken || !this.resetNewPassword || !this.resetNewPasswordConfirm) {
-          this.errorMessage = '❌ Preencha todos os campos.';
+          this.errorMessage = this.$t('forms.required');
           return;
         }
 
         if (this.resetNewPassword !== this.resetNewPasswordConfirm) {
-          this.errorMessage = '❌ Senhas não conferem.';
+          this.errorMessage = this.$t('errors.passwordMismatch');
           return;
         }
 
@@ -137,7 +167,7 @@ export default {
         );
 
         if (data && data.resetPassword) {
-          this.successMessage = '✅ Senha redefinida com sucesso! Faça login.';
+          this.successMessage = this.$t('messages.passwordResetSuccess');
           this.errorMessage = '';
           this.closeResetForm();
           this.routePage = 'login';
@@ -145,11 +175,11 @@ export default {
             window.location.hash = 'login';
           }
         } else {
-          this.errorMessage = '❌ Token inválido ou expirado.';
+          this.errorMessage = this.$t('errors.invalidToken');
           this.successMessage = '';
         }
       } catch (e) {
-        this.errorMessage = '❌ Erro ao redefinir senha: ' + (e.message || 'Erro desconhecido');
+        this.errorMessage = `${this.$t('errors.serverError')} ${e && e.message ? e.message : ''}`.trim();
         this.successMessage = '';
       }
     },
@@ -178,6 +208,11 @@ export default {
       this.userFavoriteBook = null;
       this.activeBookIds = [];
       this.routePage = 'login';
+
+      if (typeof this.resetFiltersState === 'function') {
+        this.resetFiltersState();
+      }
+
       this.successMessage = '';
       this.errorMessage = '';
       this.showDropdown = false;

@@ -1,29 +1,29 @@
 <template>
   <div class="authors-page">
     <div class="page-header">
-      <h2>Autores</h2>
+      <h2>{{ $t('navigation.authors') }}</h2>
       <div class="filters">
         <select v-model="perPage" @change="updateAuthors" class="per-page-select">
-          <option value="12">12 por página</option>
-          <option value="24">24 por página</option>
-          <option value="48">48 por página</option>
-          <option value="96">96 por página</option>
+          <option value="12">{{ $t('pagination.perPageOption', { n: 12 }) }}</option>
+          <option value="24">{{ $t('pagination.perPageOption', { n: 24 }) }}</option>
+          <option value="48">{{ $t('pagination.perPageOption', { n: 48 }) }}</option>
+          <option value="96">{{ $t('pagination.perPageOption', { n: 96 }) }}</option>
         </select>
         
         <select v-model="sortBy" @change="updateAuthors" class="sort-select">
-          <option value="name_asc">Nome (A-Z)</option>
-          <option value="name_desc">Nome (Z-A)</option>
-          <option value="books_count">Mais Livros</option>
+          <option value="name_asc">{{ $t('authors.sortNameAsc') }}</option>
+          <option value="name_desc">{{ $t('authors.sortNameDesc') }}</option>
+          <option value="books_count">{{ $t('authors.sortMostBooks') }}</option>
         </select>
       </div>
     </div>
 
     <div v-if="loading" class="loading-container">
-      <LoadingSpinner text="Carregando autores..." />
+      <LoadingSpinner :text="$t('authors.loading')" />
     </div>
 
     <div v-else-if="authors.length === 0" class="empty-state">
-      <p>Nenhum autor encontrado.</p>
+      <p>{{ $t('authors.noAuthorsFound') }}</p>
     </div>
 
     <div v-else class="authors-grid">
@@ -39,7 +39,7 @@
         <div class="author-info">
           <h3>{{ author.name }}</h3>
           <p v-if="author.bio" class="author-bio">{{ author.bio }}</p>
-          <p class="books-count">{{ author.books ? author.books.length : 0 }} livros</p>
+          <p class="books-count">{{ $t('authors.booksCountText', { n: author.books ? author.books.length : 0 }) }}</p>
         </div>
       </div>
     </div>

@@ -3,6 +3,9 @@ export default {
     changePage(page) {
       if (page >= 1 && page <= this.totalPages) {
         this.booksPage = page;
+        if (typeof this.loadBooks === 'function') {
+          this.loadBooks();
+        }
         if (typeof window !== 'undefined') {
           window.scrollTo(0, 0);
         }
@@ -12,6 +15,9 @@ export default {
     changeAuthorsPage(page) {
       if (page >= 1 && page <= this.totalAuthorsPages) {
         this.authorsPage = page;
+        if (typeof this.loadAuthorsPage === 'function') {
+          this.loadAuthorsPage();
+        }
         if (typeof window !== 'undefined') {
           window.scrollTo(0, 0);
         }
@@ -54,7 +60,7 @@ export default {
       if (!book || !this.currentUser) return;
       const bookId = book && book.id != null ? Number(book.id) : null;
       if (!Number.isFinite(bookId) || bookId <= 0) {
-        this.errorMessage = '❌ Livro inválido para adicionar ao carrinho.';
+        this.errorMessage = this.$t('errors.invalidBook');
         return;
       }
       try {
@@ -65,9 +71,9 @@ export default {
           { bookId, quantity: 1 }
         );
         await this.loadCart();
-        this.successMessage = '✅ Adicionado ao carrinho.';
+        this.successMessage = this.$t('messages.bookAddedToCart');
       } catch (e) {
-        this.errorMessage = `❌ Não foi possível adicionar ao carrinho. ${e && e.message ? e.message : ''}`.trim();
+        this.errorMessage = `${this.$t('errors.addToCartFailed')} ${e && e.message ? e.message : ''}`.trim();
       }
     },
 
@@ -139,11 +145,11 @@ export default {
           this.cart = [];
           this.pixCode = `PIX_ORDER_${data.checkout.id}_${Date.now()}`;
           this.showPixModal = true;
-          this.successMessage = '✅ Pedido criado. Abra o PIX e confirme o pagamento.';
+          this.successMessage = this.$t('messages.orderCreatedPix');
         }
       } catch (e) {
 
-        this.errorMessage = '❌ Não foi possível finalizar a compra.';
+        this.errorMessage = this.$t('errors.checkoutFailed');
       }
     },
 
@@ -156,7 +162,7 @@ export default {
     async confirmPixPayment() {
       try {
         this.errorMessage = '';
-        this.successMessage = '✅ Compra bem sucedida!';
+        this.successMessage = this.$t('messages.checkoutSuccess');
         this.closePixModal();
       } catch (e) {
 
@@ -200,7 +206,7 @@ export default {
     },
 
     async promptReturn(loanId) {
-      this.askDelete('loan', 'Deseja devolver este livro?', () => this.returnBook(loanId));
+      this.askDelete('loan', this.$t('loans.confirmReturn'), () => this.returnBook(loanId));
     },
 
     async returnBook(loanId) {
@@ -213,10 +219,10 @@ export default {
         );
         await this.loadUserLoans();
         await this.loadBooks();
-        this.successMessage = '✅ Livro devolvido com sucesso.';
+        this.successMessage = this.$t('messages.bookReturned');
       } catch (e) {
 
-        this.errorMessage = '❌ Não foi possível devolver o livro.';
+        this.errorMessage = this.$t('errors.returnFailed');
       }
     },
 
@@ -230,10 +236,10 @@ export default {
         );
         await this.loadUserLoans();
 
-        this.successMessage = '✅ Livro devolvido com sucesso.';
+        this.successMessage = this.$t('messages.bookReturned');
       } catch (e) {
 
-        this.errorMessage = '❌ Não foi possível devolver o livro.';
+        this.errorMessage = this.$t('errors.returnFailed');
       }
     },
 

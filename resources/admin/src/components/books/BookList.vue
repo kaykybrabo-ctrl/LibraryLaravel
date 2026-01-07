@@ -1,33 +1,33 @@
 <template>
   <div class="book-list">
     <div class="list-header">
-      <h2>Livros</h2>
+      <h2>{{ $t('navigation.books') }}</h2>
       
       <div class="filters">
         <select v-model="perPage" @change="updatePerPage" class="per-page-select">
-          <option value="12">12 por página</option>
-          <option value="24">24 por página</option>
-          <option value="48">48 por página</option>
-          <option value="96">96 por página</option>
+          <option value="12">{{ $t('pagination.perPageOption', { n: 12 }) }}</option>
+          <option value="24">{{ $t('pagination.perPageOption', { n: 24 }) }}</option>
+          <option value="48">{{ $t('pagination.perPageOption', { n: 48 }) }}</option>
+          <option value="96">{{ $t('pagination.perPageOption', { n: 96 }) }}</option>
         </select>
         
         <select v-model="sortBy" @change="updateSort" class="sort-select">
-          <option value="created_at_desc">Mais Recentes</option>
-          <option value="created_at_asc">Mais Antigos</option>
-          <option value="title_asc">Título (A-Z)</option>
-          <option value="title_desc">Título (Z-A)</option>
-          <option value="price_asc">Menor Preço</option>
-          <option value="price_desc">Maior Preço</option>
+          <option value="created_at_desc">{{ $t('books.sortRecent') }}</option>
+          <option value="created_at_asc">{{ $t('books.sortOldest') }}</option>
+          <option value="title_asc">{{ $t('books.sortTitleAsc') }}</option>
+          <option value="title_desc">{{ $t('books.sortTitleDesc') }}</option>
+          <option value="price_asc">{{ $t('books.sortPriceAsc') }}</option>
+          <option value="price_desc">{{ $t('books.sortPriceDesc') }}</option>
         </select>
       </div>
     </div>
 
     <div v-if="loading" class="loading-container">
-      <LoadingSpinner text="Carregando livros..." />
+      <LoadingSpinner :text="$t('books.loading')" />
     </div>
 
     <div v-else-if="books.length === 0" class="empty-state">
-      <p>Nenhum livro encontrado.</p>
+      <p>{{ $t('books.noBooksFound') }}</p>
     </div>
 
     <div v-else class="books-grid">

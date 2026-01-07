@@ -22,8 +22,8 @@ export default {
       try {
         if (!this.newAuthor.name) return;
         await this.graphql(
-          'mutation CreateAuthor($name: String!, $bio: String, $photo: String) { createAuthor(name: $name, bio: $bio, photo: $photo) { id } }',
-          this.newAuthor
+          'mutation CreateAuthor($input: CreateAuthorInput!) { createAuthor(input: $input) { id } }',
+          { input: this.newAuthor }
         );
         await this.loadAuthors();
         this.closeCreateAuthorModal();
@@ -51,8 +51,15 @@ export default {
       try {
         if (!this.editAuthor || !this.editAuthor.name) return;
         await this.graphql(
-          'mutation UpdateAuthor($id: ID!, $name: String!, $bio: String, $photo: String) { updateAuthor(id: $id, name: $name, bio: $bio, photo: $photo) { id } }',
-          this.editAuthor
+          'mutation UpdateAuthor($id: ID!, $input: UpdateAuthorInput!) { updateAuthor(id: $id, input: $input) { id } }',
+          {
+            id: this.editAuthor.id,
+            input: {
+              name: this.editAuthor.name,
+              bio: this.editAuthor.bio,
+              photo: this.editAuthor.photo,
+            },
+          }
         );
         await this.loadAuthors();
         await this.loadBooks();
@@ -65,7 +72,7 @@ export default {
     async deleteAuthor(authorId) {
       try {
         await this.graphql(
-          'mutation DeleteAuthor($id: ID!) { deleteAuthor(id: $id) }',
+          'mutation DeleteAuthor($id: ID!) { deleteAuthor(id: $id) { message } }',
           { id: authorId }
         );
         await this.loadAuthors();

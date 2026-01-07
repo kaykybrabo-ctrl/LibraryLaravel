@@ -2,8 +2,8 @@
   <div class="modal" :class="{ active: show }" @click.self="$emit('close')">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 style="color:#162c74; font-weight:600;">{{ title || 'Confirmar ação' }}</h3>
-        <button class="modal-close" @click="$emit('close')">✕</button>
+        <h3 style="color:#162c74; font-weight:600;">{{ title || $t('common.confirmActionTitle') }}</h3>
+        <button class="modal-close" @click="$emit('close')">&times;</button>
       </div>
       <div class="modal-body">
         <p style="color:#666; line-height:1.5;">{{ message }}</p>
@@ -13,10 +13,10 @@
             :class="{ 'btn-danger': isDanger }"
             @click="$emit('confirm')"
           >
-            {{ confirmLabel || 'Confirmar' }}
+            {{ confirmLabel || $t('common.confirm') }}
           </button>
           <button class="btn btn-small btn-secondary" @click="$emit('close')">
-            {{ cancelLabel || 'Cancelar' }}
+            {{ cancelLabel || $t('common.cancel') }}
           </button>
         </div>
       </div>

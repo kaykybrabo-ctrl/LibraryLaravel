@@ -2,7 +2,7 @@
   <div class="login-form">
     <form @submit.prevent="handleSubmit">
       <div class="form-group">
-        <label for="email">Email</label>
+        <label for="email">{{ $t('auth.email') }}</label>
         <input
           id="email"
           v-model="form.email"
@@ -13,7 +13,7 @@
       </div>
       
       <div class="form-group">
-        <label for="password">Senha</label>
+        <label for="password">{{ $t('auth.password') }}</label>
         <div class="password-input">
           <input
             id="password"
@@ -27,7 +27,7 @@
             class="toggle-password"
             @click="showPassword = !showPassword"
           >
-            {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+            {{ showPassword ? $t('auth.hidePassword') : $t('auth.showPassword') }}
           </button>
         </div>
       </div>
@@ -37,8 +37,8 @@
       </div>
 
       <button type="submit" class="btn btn-primary" :disabled="loading">
-        <LoadingSpinner v-if="loading" text="Entrando..." />
-        <span v-else>Entrar</span>
+        <LoadingSpinner v-if="loading" :text="$t('auth.loggingIn')" />
+        <span v-else>{{ $t('auth.login') }}</span>
       </button>
     </form>
   </div>
@@ -71,7 +71,7 @@ export default {
         localStorage.setItem('token', response.data.token)
         this.$emit('success', response.data.user)
       } catch (error) {
-        this.error = error.response?.data?.message || 'Erro ao fazer login'
+        this.error = error.response?.data?.message || this.$t('errors.loginFailed')
       } finally {
         this.loading = false
       }

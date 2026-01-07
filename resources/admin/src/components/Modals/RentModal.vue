@@ -2,13 +2,13 @@
   <div class="modal" :class="{ active: show }" @click.self="$emit('close')">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Alugar Livro</h3>
-        <button class="modal-close" @click="$emit('close')">✕</button>
+        <h3>{{ $t('books.rentBookTitle') }}</h3>
+        <button class="modal-close" @click="$emit('close')">&times;</button>
       </div>
       <div class="modal-body">
         <p v-if="rentTargetBook" style="margin-bottom:12px;color:#162c74;font-weight:600;">{{ rentTargetBook.title }}</p>
         <div class="form-group">
-          <label>Data de devolução:</label>
+          <label>{{ $t('loans.returnDate') }}:</label>
           <input
             type="date"
             :value="rentReturnDate"
@@ -26,8 +26,8 @@
         </div>
 
         <div style="display:flex; gap:10px; margin-top:10px;">
-          <button class="btn btn-small" :disabled="!canConfirm" @click="onConfirm">Confirmar Aluguel</button>
-          <button class="btn btn-small btn-secondary" @click="$emit('close')">Cancelar</button>
+          <button class="btn btn-small" :disabled="!canConfirm" @click="onConfirm">{{ $t('books.confirmRent') }}</button>
+          <button class="btn btn-small btn-secondary" @click="$emit('close')">{{ $t('common.cancel') }}</button>
         </div>
       </div>
     </div>
@@ -56,9 +56,9 @@ export default {
 
     validationMessage() {
       const v = String(this.rentReturnDate || '').trim();
-      if (!v) return 'Selecione uma data de devolução.';
-      if (this.minEndDate && v < this.minEndDate) return 'Não é permitido alugar para uma data antes de hoje.';
-      if (this.maxDate2030 && v > this.maxDate2030) return 'A data máxima permitida é 2030.';
+      if (!v) return this.$t('errors.returnDateRequired');
+      if (this.minEndDate && v < this.minEndDate) return this.$t('errors.returnDatePast');
+      if (this.maxDate2030 && v > this.maxDate2030) return this.$t('errors.returnDateMax', { year: 2030 });
       return '';
     },
   },

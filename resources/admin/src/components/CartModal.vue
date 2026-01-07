@@ -1,13 +1,13 @@
 <template>
   <div class="cart-modal">
     <div class="modal-header">
-      <h3>Meu Carrinho</h3>
+      <h3>{{ $t('cart.title') }}</h3>
       <button @click="$emit('close')" class="close-btn">&times;</button>
     </div>
     
     <div class="cart-content">
       <div v-if="items.length === 0" class="empty-cart">
-        <p>Seu carrinho está vazio.</p>
+        <p>{{ $t('cart.empty') }}</p>
       </div>
       
       <div v-else class="cart-items">
@@ -21,31 +21,31 @@
           </div>
           <div class="item-details">
             <h4>{{ item.book.title }}</h4>
-            <p class="author">{{ item.book.author ? item.book.author.name : 'Autor desconhecido' }}</p>
-            <p class="price">R$ {{ item.book.price ? item.book.price.toFixed(2) : '0.00' }}</p>
-            <p class="quantity">Quantidade: {{ item.quantity }}</p>
-            <p class="subtotal">Subtotal: R$ {{ (item.book.price * item.quantity).toFixed(2) }}</p>
+            <p class="author">{{ item.book.author ? item.book.author.name : $t('books.unknownAuthor') }}</p>
+            <p class="price">{{ $formatCurrency(Number(item.book.price || 0)) }}</p>
+            <p class="quantity">{{ $t('cart.quantity') }}: {{ item.quantity }}</p>
+            <p class="subtotal">{{ $t('cart.subtotal') }}: {{ $formatCurrency(Number(item.book.price || 0) * Number(item.quantity || 0)) }}</p>
           </div>
           <div class="item-actions">
             <button @click="updateQuantity(item, item.quantity - 1)" class="quantity-btn">-</button>
             <button @click="updateQuantity(item, item.quantity + 1)" class="quantity-btn">+</button>
-            <button @click="removeItem(item)" class="remove-btn">Remover</button>
+            <button @click="removeItem(item)" class="remove-btn">{{ $t('cart.removeItem') }}</button>
           </div>
         </div>
       </div>
       
       <div class="cart-summary">
         <div class="summary-row">
-          <span>Total de itens: {{ totalItems }}</span>
+          <span>{{ $t('cart.totalItems') }}: {{ totalItems }}</span>
         </div>
         <div class="summary-row total">
-          <span>Total: R$ {{ totalPrice.toFixed(2) }}</span>
+          <span>{{ $t('cart.total') }}: {{ $formatCurrency(Number(totalPrice || 0)) }}</span>
         </div>
       </div>
       
       <div class="cart-actions">
-        <button @click="clearCart" class="btn btn-outline">Esvaziar Carrinho</button>
-        <button @click="checkout" class="btn btn-primary">Finalizar Compra</button>
+        <button @click="clearCart" class="btn btn-outline">{{ $t('cart.clear') }}</button>
+        <button @click="checkout" class="btn btn-primary">{{ $t('cart.checkout') }}</button>
       </div>
     </div>
   </div>

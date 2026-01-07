@@ -21,7 +21,7 @@ class CartEngagementMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Seu carrinho está te esperando - PedBook',
+            subject: __('messages.cart_engagement_subject'),
         );
     }
     public function content(): Content

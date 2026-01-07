@@ -53,6 +53,7 @@ return [
     ],
     'debug' => env('LIGHTHOUSE_DEBUG', GraphQL\Error\DebugFlag::INCLUDE_DEBUG_MESSAGE | GraphQL\Error\DebugFlag::INCLUDE_TRACE),
     'error_handlers' => [
+        App\GraphQL\ErrorHandlers\NotFoundErrorHandler::class,
         Nuwave\Lighthouse\Execution\AuthenticationErrorHandler::class,
         Nuwave\Lighthouse\Execution\AuthorizationErrorHandler::class,
         Nuwave\Lighthouse\Execution\ValidationErrorHandler::class,

@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'unauthenticated' => 'Unauthenticated.',
+    'forbidden' => 'Não autorizado.',
+    'not_found' => 'Recurso não encontrado.',
+    'validation_failed' => 'Os dados informados são inválidos.',
+    'invalid_credentials' => 'Credenciais inválidas.',
+    'register_failed' => 'Falha ao registrar usuário. Tente novamente.',
+    'create_book_failed' => 'Falha ao criar livro. Tente novamente.',
+    'admin_cannot_rent' => 'Administradores não podem alugar livros.',
+    'book_already_borrowed' => 'Livro já está alugado.',
+    'access_not_allowed' => 'Acesso não permitido.',
+    'admin_cannot_favorite' => 'Administradores não podem favoritar livros.',
+    'admin_cannot_review' => 'Administradores não podem deixar avaliações.',
+    'missing_image_data' => 'Dados da imagem ausentes.',
+    'invalid_upload_target' => 'Destino de upload inválido.',
+    'invalid_image_file' => 'Apenas arquivos de imagem são permitidos.',
+    'invalid_image_data' => 'Dados de imagem inválidos.',
+    'cloudinary_upload_failed' => 'Falha no upload.',
+    'cloudinary_invalid_response' => 'Resposta inválida do Cloudinary.',
+    'admin_cannot_checkout' => 'Administradores não podem comprar livros.',
+    'admin_cannot_add_to_cart' => 'Administradores não podem adicionar itens ao carrinho.',
+    'invalid_token' => 'Token inválido ou expirado.',
+    'user_not_found' => 'Usuário não encontrado.',
+];

@@ -1,9 +1,9 @@
 <template>
   <div>
-    <h2>Entrar na sua conta</h2>
+    <h2>{{ $t('auth.loginHeading') }}</h2>
     <form @submit.prevent="$emit('submit')">
       <div class="form-group">
-        <label>Email:</label>
+        <label>{{ $t('auth.email') }}:</label>
         <input
           type="email"
           :value="loginEmail"
@@ -12,7 +12,7 @@
         >
       </div>
       <div class="form-group">
-        <label>Senha:</label>
+        <label>{{ $t('auth.password') }}:</label>
         <div style="display:flex; gap:8px; align-items:center;">
           <input
             :type="loginPasswordVisible ? 'text' : 'password'"
@@ -27,28 +27,28 @@
             style="white-space: nowrap;"
             @click="$emit('update:loginPasswordVisible', !loginPasswordVisible)"
           >
-            {{ loginPasswordVisible ? 'Ocultar' : 'Mostrar' }}
+            {{ loginPasswordVisible ? $t('auth.hidePassword') : $t('auth.showPassword') }}
           </button>
         </div>
       </div>
       <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 4px;">
-        Entrar
+        {{ $t('auth.login') }}
       </button>
     </form>
 
     <p class="text-center mt-2">
-      <a href="#" @click.prevent="$emit('openReset')">Esqueceu a senha?</a>
+      <a href="#" @click.prevent="$emit('openReset')">{{ $t('auth.forgotPassword') }}</a>
     </p>
     <p class="text-center mt-3">
-      Não tem conta?
-      <a href="#" @click.prevent="$emit('showRegister')">Criar conta</a>
+      {{ $t('auth.noAccountQuestion') }}
+      <a href="#" @click.prevent="$emit('showRegister')">{{ $t('auth.register') }}</a>
     </p>
     <button
       class="btn btn-secondary"
       style="margin-top: 10px; width: 100%;"
       @click="$emit('goToLanding')"
     >
-      ← Voltar para Home
+      {{ $t('auth.backToHome') }}
     </button>
   </div>
 </template>

@@ -18,7 +18,7 @@ class ResetPasswordMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Redefinição de senha - PedBook',
+            subject: __('messages.password_reset_subject'),
         );
     }
     public function content(): Content

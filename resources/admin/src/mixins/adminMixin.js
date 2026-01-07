@@ -7,12 +7,24 @@ export default {
       }
     },
 
+    async switchAdminAuthorsMode(mode) {
+      this.adminAuthorsMode = mode === 'deleted' ? 'deleted' : 'active';
+      if (this.adminAuthorsMode === 'deleted') {
+        await this.loadDeletedAuthors();
+      } else {
+        if (typeof this.loadAuthorsPage === 'function') {
+          await this.loadAuthorsPage();
+        }
+      }
+    },
+
     async loadDeletedBooks() {
       if (!this.currentUser || !this.currentUser.is_admin) return;
       try {
         this.deletedBooksLoading = true;
         const data = await this.graphql(
-          'query DeletedBooks { deletedBooks { id title description photo price author { id name } } }'
+          'query DeletedBooks($sort: String) { deletedBooks(sort: $sort) { id title description photo price author { id name } } }',
+          { sort: this.deletedBooksSortKey || 'recent' }
         );
         this.deletedBooks = (data && data.deletedBooks) ? data.deletedBooks : [];
       } catch (e) {
@@ -22,15 +34,43 @@ export default {
       }
     },
 
+    async loadDeletedAuthors() {
+      if (!this.currentUser || !this.currentUser.is_admin) return;
+      try {
+        this.deletedAuthorsLoading = true;
+        const data = await this.graphql(
+          'query DeletedAuthors($sort: String) { deletedAuthors(sort: $sort) { id name bio photo books { id } } }',
+          { sort: this.deletedAuthorsSortKey || 'recent' }
+        );
+        this.deletedAuthors = (data && data.deletedAuthors) ? data.deletedAuthors : [];
+      } catch (e) {
+        this.deletedAuthors = [];
+      } finally {
+        this.deletedAuthorsLoading = false;
+      }
+    },
+
     askRestoreBook(bookId) {
       const id = Number(bookId);
       if (!id) return;
-      this.confirmTitle = 'Restaurar Livro';
-      this.confirmMessage = 'Deseja restaurar este livro?';
-      this.confirmConfirmLabel = 'Restaurar';
-      this.confirmCancelLabel = 'Cancelar';
+      this.confirmTitle = `${this.$t('common.restore')} ${this.$t('entities.book')}`;
+      this.confirmMessage = this.$t('common.confirmRestoreBook');
+      this.confirmConfirmLabel = this.$t('common.restore');
+      this.confirmCancelLabel = this.$t('common.cancel');
       this.confirmIsDanger = false;
       this.confirmCallback = () => this.restoreBookAdmin(id);
+      this.showConfirmModal = true;
+    },
+
+    askRestoreAuthor(authorId) {
+      const id = Number(authorId);
+      if (!id) return;
+      this.confirmTitle = `${this.$t('common.restore')} ${this.$t('entities.author')}`;
+      this.confirmMessage = this.$t('common.confirmRestoreAuthor');
+      this.confirmConfirmLabel = this.$t('common.restore');
+      this.confirmCancelLabel = this.$t('common.cancel');
+      this.confirmIsDanger = false;
+      this.confirmCallback = () => this.restoreAuthorAdmin(id);
       this.showConfirmModal = true;
     },
 
@@ -44,6 +84,24 @@ export default {
         await this.loadAuthors();
         if (this.adminBooksMode === 'deleted') {
           await this.loadDeletedBooks();
+        }
+      } catch (e) {
+      }
+    },
+
+    async restoreAuthorAdmin(authorId) {
+      try {
+        await this.graphql(
+          'mutation RestoreAuthor($id: ID!) { restoreAuthor(id: $id) { id } }',
+          { id: authorId }
+        );
+        await this.loadAuthors();
+        if (typeof this.loadAuthorsPage === 'function') {
+          await this.loadAuthorsPage();
+        }
+        await this.loadBooks();
+        if (this.adminAuthorsMode === 'deleted') {
+          await this.loadDeletedAuthors();
         }
       } catch (e) {
       }
@@ -79,23 +137,29 @@ export default {
       try {
         this.newBookError = '';
         if (!this.newBook.title || !this.newBook.author_id) {
-          this.newBookError = 'Título e autor são obrigatórios.';
+          this.newBookError = this.$t('errors.titleAndAuthorRequired');
           return;
         }
-        const variables = { ...this.newBook };
+        const input = {
+          title: this.newBook.title,
+          description: this.newBook.description,
+          photo: this.newBook.photo,
+          price: this.newBook.price,
+          author_id: this.newBook.author_id,
+        };
         if (this.newBookAuthorMode === 'new') {
-          variables.new_author_name = this.newBook.author_id;
-          variables.author_id = null;
+          input.author_name = this.newBook.author_id;
+          input.author_id = null;
         }
         await this.graphql(
-          'mutation CreateBook($title: String!, $authorId: ID, $newAuthorName: String, $description: String, $photo: String, $price: Float) { createBook(title: $title, author_id: $authorId, new_author_name: $newAuthorName, description: $description, photo: $photo, price: $price) { id } }',
-          variables
+          'mutation CreateBook($input: CreateBookInput!) { createBook(input: $input) { id } }',
+          { input }
         );
         await this.loadBooks();
         await this.loadAuthors();
         this.closeCreateBookModal();
       } catch (e) {
-        this.newBookError = 'Erro ao criar livro.';
+        this.newBookError = this.$t('errors.bookCreateError');
       }
     },
 
@@ -120,14 +184,16 @@ export default {
       try {
         if (!this.editBook || !this.editBook.title || !this.editBook.author_id) return;
         await this.graphql(
-          'mutation UpdateBook($id: ID!, $title: String!, $authorId: ID!, $description: String, $photo: String, $price: Float) { updateBook(id: $id, title: $title, author_id: $authorId, description: $description, photo: $photo, price: $price) { id } }',
+          'mutation UpdateBook($id: ID!, $input: UpdateBookInput!) { updateBook(id: $id, input: $input) { id } }',
           {
             id: this.editBook.id,
-            title: this.editBook.title,
-            authorId: this.editBook.author_id,
-            description: this.editBook.description,
-            photo: this.editBook.photo,
-            price: this.editBook.price,
+            input: {
+              title: this.editBook.title,
+              author_id: this.editBook.author_id,
+              description: this.editBook.description,
+              photo: this.editBook.photo,
+              price: this.editBook.price,
+            },
           }
         );
         await this.loadBooks();
@@ -160,10 +226,13 @@ export default {
       try {
         if (!this.newAuthor.name) return;
         await this.graphql(
-          'mutation CreateAuthor($name: String!, $bio: String, $photo: String) { createAuthor(name: $name, bio: $bio, photo: $photo) { id } }',
-          this.newAuthor
+          'mutation CreateAuthor($input: CreateAuthorInput!) { createAuthor(input: $input) { id } }',
+          { input: this.newAuthor }
         );
         await this.loadAuthors();
+        if (typeof this.loadAuthorsPage === 'function') {
+          await this.loadAuthorsPage();
+        }
         this.closeCreateAuthorModal();
       } catch (e) {
 
@@ -189,10 +258,20 @@ export default {
       try {
         if (!this.editAuthor || !this.editAuthor.name) return;
         await this.graphql(
-          'mutation UpdateAuthor($id: ID!, $name: String!, $bio: String, $photo: String) { updateAuthor(id: $id, name: $name, bio: $bio, photo: $photo) { id } }',
-          this.editAuthor
+          'mutation UpdateAuthor($id: ID!, $input: UpdateAuthorInput!) { updateAuthor(id: $id, input: $input) { id } }',
+          {
+            id: this.editAuthor.id,
+            input: {
+              name: this.editAuthor.name,
+              bio: this.editAuthor.bio,
+              photo: this.editAuthor.photo,
+            },
+          }
         );
         await this.loadAuthors();
+        if (typeof this.loadAuthorsPage === 'function') {
+          await this.loadAuthorsPage();
+        }
         await this.loadBooks();
         this.closeEditAuthorModal();
       } catch (e) {
@@ -203,7 +282,7 @@ export default {
     async deleteBook(bookId) {
       try {
         await this.graphql(
-          'mutation DeleteBook($id: ID!) { deleteBook(id: $id) }',
+          'mutation DeleteBook($id: ID!) { deleteBook(id: $id) { message } }',
           { id: bookId }
         );
         await this.loadBooks();
@@ -215,11 +294,17 @@ export default {
     async deleteAuthor(authorId) {
       try {
         await this.graphql(
-          'mutation DeleteAuthor($id: ID!) { deleteAuthor(id: $id) }',
+          'mutation DeleteAuthor($id: ID!) { deleteAuthor(id: $id) { message } }',
           { id: authorId }
         );
         await this.loadAuthors();
         await this.loadBooks();
+        if (typeof this.loadAuthorsPage === 'function') {
+          await this.loadAuthorsPage();
+        }
+        if (this.adminAuthorsMode === 'deleted') {
+          await this.loadDeletedAuthors();
+        }
       } catch (e) {
 
       }
@@ -240,10 +325,10 @@ export default {
     promptReturnAdminLoan(loanId) {
       const id = Number(loanId);
       if (!id) return;
-      this.confirmTitle = 'Devolver Livro';
-      this.confirmMessage = 'Deseja devolver este livro?';
-      this.confirmConfirmLabel = 'Devolver';
-      this.confirmCancelLabel = 'Cancelar';
+      this.confirmTitle = `${this.$t('books.return')} ${this.$t('entities.book')}`;
+      this.confirmMessage = this.$t('loans.confirmReturn');
+      this.confirmConfirmLabel = this.$t('books.return');
+      this.confirmCancelLabel = this.$t('common.cancel');
       this.confirmIsDanger = false;
       this.confirmCallback = () => this.returnBookAdminLoan(id);
       this.showConfirmModal = true;
@@ -258,9 +343,9 @@ export default {
           { id: loanId }
         );
         await this.loadAllLoans();
-        this.successMessage = '✅ Livro devolvido com sucesso.';
+        this.successMessage = this.$t('messages.bookReturned');
       } catch (e) {
-        this.errorMessage = '❌ Não foi possível devolver o livro.';
+        this.errorMessage = this.$t('errors.returnFailed');
       }
     },
 

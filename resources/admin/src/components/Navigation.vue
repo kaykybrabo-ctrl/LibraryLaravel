@@ -8,38 +8,38 @@
     
     <div class="nav-menu" :class="{ active: menuOpen }">
       <router-link to="/books" class="nav-link" :class="{ active: currentView === 'books' }">
-        Livros
+        {{ $t('navigation.books') }}
       </router-link>
       <router-link to="/authors" class="nav-link" :class="{ active: currentView === 'authors' }">
-        Autores
+        {{ $t('navigation.authors') }}
       </router-link>
       <router-link v-if="isLoggedIn" to="/loans" class="nav-link" :class="{ active: currentView === 'loans' }">
-        Meus Empréstimos
+        {{ $t('navigation.loans') }}
       </router-link>
       
       <div class="nav-actions">
         <template v-if="!isLoggedIn">
           <button @click="$emit('showLogin')" class="btn btn-outline">
-            Entrar
+            {{ $t('auth.login') }}
           </button>
           <button @click="$emit('showRegister')" class="btn btn-outline">
-            Cadastrar
+            {{ $t('auth.register') }}
           </button>
         </template>
         
         <template v-else>
-          <span class="user-welcome">Bem-vindo, {{ user.name }}</span>
+          <span class="user-welcome">{{ $t('common.welcome') }}, {{ user.name }}</span>
           <button v-if="isAdmin" @click="$emit('setView', 'admin')" class="btn btn-outline">
-            Admin
+            {{ $t('navigation.admin') }}
           </button>
           <button @click="$emit('logout')" class="btn btn-outline">
-            Sair
+            {{ $t('auth.logout') }}
           </button>
         </template>
       </div>
       
       <button class="nav-toggle" @click="toggleMenu">
-        ☰
+        {{ $t('common.menu') }}
       </button>
     </div>
   </nav>

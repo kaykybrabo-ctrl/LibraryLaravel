@@ -6,14 +6,14 @@
       </div>
       <div class="book-info">
         <h1>{{ book.title }}</h1>
-        <p class="author">por {{ book.author ? book.author.name : 'Autor desconhecido' }}</p>
-        <p class="price">R$ {{ book.price ? book.price.toFixed(2) : '0.00' }}</p>
+        <p class="author">{{ $t('common.by') }} {{ book.author ? book.author.name : $t('books.unknownAuthor') }}</p>
+        <p class="price">{{ $formatCurrency(Number(book.price || 0)) }}</p>
       </div>
     </div>
     
     <div class="book-description">
-      <h3>Descrição</h3>
-      <p>{{ book.description || 'Sem descrição disponível.' }}</p>
+      <h3>{{ $t('books.description') }}</h3>
+      <p>{{ book.description || $t('books.noDescription') }}</p>
     </div>
     
     <div class="book-actions">
@@ -22,18 +22,18 @@
         @click="$emit('borrowBook', book)" 
         class="btn btn-primary"
       >
-        Alugar Livro
+        {{ $t('books.rent') }}
       </button>
       
       <button 
         @click="$emit('addToCart', book)" 
         class="btn btn-secondary"
       >
-        Adicionar ao Carrinho
+        {{ $t('books.addToCart') }}
       </button>
       
       <button @click="$emit('close')" class="btn btn-outline">
-        Fechar
+        {{ $t('common.close') }}
       </button>
     </div>
   </div>

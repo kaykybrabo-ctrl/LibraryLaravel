@@ -36,14 +36,14 @@ class CreateBookAction
                 Log::info('Book created successfully', ['book_id' => $book->id]);
                 return $book;
             });
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Failed to create book', [
                 'title' => $validatedData['title'] ?? 'unknown',
                 'author_id' => $validatedData['author_id'] ?? 'none',
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            throw new \Exception('Failed to create book. Please try again.');
+            throw new \RuntimeException(__('errors.create_book_failed'), 0, $e);
         }
     }
 }

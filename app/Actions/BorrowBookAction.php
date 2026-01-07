@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Http\Requests\BorrowBookRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 class BorrowBookAction
 {
     public function execute(BorrowBookRequest $request, User $user): Loan
@@ -15,14 +16,14 @@ class BorrowBookAction
                 $validated = $request->validated();
                 $book = Book::findOrFail($validated['book_id']);
                 if ($book->isBorrowed()) {
-                    throw new \Exception('This book is already borrowed');
+                    throw new ConflictHttpException(__('errors.book_already_borrowed'));
                 }
                 $existingLoan = Loan::where('user_id', $user->id)
                     ->where('book_id', $book->id)
                     ->whereNull('returned_at')
                     ->first();
                 if ($existingLoan) {
-                    throw new \Exception('You have already borrowed this book');
+                    throw new ConflictHttpException(__('errors.book_already_borrowed'));
                 }
                 $loan = Loan::create([
                     'user_id' => $user->id,
@@ -37,7 +38,14 @@ class BorrowBookAction
                 ]);
                 return $loan;
             });
-        } catch (\Exception $e) {
+        } catch (ConflictHttpException $e) {
+            Log::warning('Failed to borrow book', [
+                'user_id' => $user->id,
+                'book_id' => $request->input('book_id'),
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        } catch (\Throwable $e) {
             Log::error('Failed to borrow book', [
                 'user_id' => $user->id,
                 'book_id' => $request->input('book_id'),

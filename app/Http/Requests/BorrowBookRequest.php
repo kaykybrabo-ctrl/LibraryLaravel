@@ -17,11 +17,11 @@ class BorrowBookRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'book_id.required' => 'O ID do livro é obrigatório.',
-            'book_id.exists' => 'O livro selecionado não existe.',
-            'return_date.required' => 'A data de devolução é obrigatória.',
-            'return_date.date' => 'A data de devolução deve ser uma data válida.',
-            'return_date.after' => 'A data de devolução deve ser posterior a hoje.',
+            'book_id.required' => __('validation.custom.book_id.required'),
+            'book_id.exists' => __('validation.custom.book_id.exists'),
+            'return_date.required' => __('validation.custom.return_date.required'),
+            'return_date.date' => __('validation.custom.return_date.date'),
+            'return_date.after' => __('validation.custom.return_date.after'),
         ];
     }
 }

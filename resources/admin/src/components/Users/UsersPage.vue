@@ -1,9 +1,9 @@
 <template>
   <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-      <h2>👥 Usuários</h2>
+      <h2>{{ $t('users.title') }}</h2>
     </div>
-    <div v-if="usersLoading" class="text-center">Carregando usuários...</div>
+    <div v-if="usersLoading" class="text-center">{{ $t('users.loading') }}</div>
     <div v-else>
       <div class="user-grid">
         <div v-for="u in paginatedUsers" :key="u.id" class="user-card" @click="$emit('open-user-profile', u)">
@@ -14,17 +14,17 @@
             <div class="user-name">{{ u.name }}</div>
             <div class="user-email">{{ u.email }}</div>
             <div style="display:flex; justify-content: space-between; align-items:center; margin-top:4px;">
-              <span class="user-role">{{ u.is_admin ? 'Administrador' : 'Usuário' }}</span>
-              <span style="font-size:0.75rem; color:#888;">Clique para ver perfil completo</span>
+              <span class="user-role">{{ u.is_admin ? $t('users.roleAdmin') : $t('users.roleUser') }}</span>
+              <span style="font-size:0.75rem; color:#888;">{{ $t('users.clickToViewProfile') }}</span>
             </div>
           </div>
         </div>
       </div>
 
       <div class="pagination" v-if="totalUsersPages > 1">
-        <button class="page-link" @click="$emit('change-users-page', usersPage - 1)" :disabled="usersPage === 1">Anterior</button>
+        <button class="page-link" @click="$emit('change-users-page', usersPage - 1)" :disabled="usersPage === 1">{{ $t('pagination.previous') }}</button>
         <button v-for="page in totalUsersPages" :key="page" class="page-link" :class="{ active: page === usersPage }" @click="$emit('change-users-page', page)">{{ page }}</button>
-        <button class="page-link" @click="$emit('change-users-page', usersPage + 1)" :disabled="usersPage === totalUsersPages">Próxima</button>
+        <button class="page-link" @click="$emit('change-users-page', usersPage + 1)" :disabled="usersPage === totalUsersPages">{{ $t('pagination.next') }}</button>
       </div>
     </div>
   </div>

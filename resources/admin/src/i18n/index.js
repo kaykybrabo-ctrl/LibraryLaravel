@@ -17,19 +17,25 @@ const getBrowserLanguage = () => {
 let currentLanguage = getBrowserLanguage();
 
 export const t = (key, params = {}) => {
-  const keys = key.split('.');
-  let value = translations[currentLanguage];
-  
+  const keys = String(key).split('.');
+  const dict = translations[currentLanguage] || {};
+
+  let value = dict;
   for (const k of keys) {
     value = value?.[k];
   }
-  
-  if (!value) return key;
-  
-  Object.keys(params).forEach(param => {
-    value = value.replace(`{${param}}`, params[param]);
+
+  if (value == null) {
+    value = dict[key];
+  }
+
+  if (value == null) return key;
+
+  value = String(value);
+  Object.keys(params).forEach((param) => {
+    value = value.replace(new RegExp(`\\{${param}\\}`, 'g'), String(params[param]));
   });
-  
+
   return value;
 };
 

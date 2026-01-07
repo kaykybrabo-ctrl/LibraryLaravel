@@ -21,16 +21,16 @@ class UpdateBookRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'id.required' => 'O ID do livro é obrigatório.',
-            'id.exists' => 'O livro selecionado não existe.',
-            'title.required' => 'O título é obrigatório.',
-            'title.max' => 'O título não pode ter mais de 255 caracteres.',
-            'author_id.required' => 'O autor é obrigatório.',
-            'author_id.exists' => 'O autor selecionado não existe.',
-            'description.max' => 'A descrição não pode ter mais de 2000 caracteres.',
-            'photo.max' => 'A URL da foto não pode ter mais de 500 caracteres.',
-            'price.numeric' => 'O preço deve ser um número.',
-            'price.min' => 'O preço não pode ser negativo.',
+            'id.required' => __('validation.custom.id.required'),
+            'id.exists' => __('validation.custom.id.exists'),
+            'title.required' => __('validation.custom.title.required'),
+            'title.max' => __('validation.custom.title.max'),
+            'author_id.required' => __('validation.custom.author_id.required'),
+            'author_id.exists' => __('validation.custom.author_id.exists'),
+            'description.max' => __('validation.custom.description.max'),
+            'photo.max' => __('validation.custom.photo.max'),
+            'price.numeric' => __('validation.custom.price.numeric'),
+            'price.min' => __('validation.custom.price.min'),
         ];
     }
 }

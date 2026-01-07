@@ -1,15 +1,15 @@
 <template>
   <div class="loans-page">
     <div class="page-header">
-      <h2>Meus Empréstimos</h2>
+      <h2>{{ $t('loans.title') }}</h2>
     </div>
 
     <div v-if="loading" class="loading-container">
-      <LoadingSpinner text="Carregando empréstimos..." />
+      <LoadingSpinner :text="$t('loans.loadingAdmin')" />
     </div>
 
     <div v-else-if="loans.length === 0" class="empty-state">
-      <p>Você não tem empréstimos ativos.</p>
+      <p>{{ $t('loans.noActiveLoans') }}</p>
     </div>
 
     <div v-else class="loans-list">
@@ -23,20 +23,20 @@
           <img :src="loan.book.photo || '/images/default-book.jpg'" :alt="loan.book.title" />
           <div class="book-info">
             <h4>{{ loan.book.title }}</h4>
-            <p class="author">{{ loan.book.author ? loan.book.author.name : 'Autor desconhecido' }}</p>
+            <p class="author">{{ loan.book.author ? loan.book.author.name : $t('books.unknownAuthor') }}</p>
           </div>
         </div>
         
         <div class="loan-details">
           <div class="loan-dates">
-            <p><strong>Data do empréstimo:</strong> {{ formatDate(loan.loan_date) }}</p>
-            <p><strong>Data de devolução:</strong> {{ formatDate(loan.return_date) }}</p>
-            <p v-if="loan.returned_at" class="returned-date"><strong>Devolvido em:</strong> {{ formatDate(loan.returned_at) }}</p>
+            <p><strong>{{ $t('loans.loanDate') }}:</strong> {{ formatDate(loan.loan_date) }}</p>
+            <p><strong>{{ $t('loans.returnDate') }}:</strong> {{ formatDate(loan.return_date) }}</p>
+            <p v-if="loan.returned_at" class="returned-date"><strong>{{ $t('loans.returnedAt') }}:</strong> {{ formatDate(loan.returned_at) }}</p>
           </div>
           
           <div class="loan-status" :class="loan.status">
             <span class="status-label">{{ getStatusText(loan.status) }}</span>
-            <span v-if="loan.is_overdue" class="overdue-label">ATRASADO</span>
+            <span v-if="loan.is_overdue" class="overdue-label">{{ $t('loans.statusOverdue') }}</span>
           </div>
         </div>
       </div>
@@ -57,14 +57,13 @@ export default {
   methods: {
     formatDate(dateString) {
       if (!dateString) return '';
-      const date = new Date(dateString);
-      return date.toLocaleDateString('pt-BR');
+      return this.$formatDate(dateString);
     },
     getStatusText(status) {
       const statusMap = {
-        'active': 'Ativo',
-        'returned': 'Devolvido',
-        'overdue': 'Atrasado'
+        active: this.$t('loans.statusActive'),
+        returned: this.$t('loans.statusReturned'),
+        overdue: this.$t('loans.statusOverdue'),
       };
       return statusMap[status] || status;
     }

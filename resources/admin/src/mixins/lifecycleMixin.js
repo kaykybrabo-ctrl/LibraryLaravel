@@ -14,6 +14,25 @@ export default {
 
       if (['books', 'authors', 'author-detail', 'users', 'user-detail', 'profile', 'login', 'cart', 'loans', 'sales', 'my-loans'].includes(hash)) {
         this.routePage = hash;
+        if (hash === 'books') {
+          if (typeof this.loadAuthors === 'function') {
+            this.loadAuthors();
+          }
+          if (typeof this.loadBooks === 'function') {
+            this.loadBooks();
+          }
+        }
+        if (hash === 'authors') {
+          if (this.currentUser && this.currentUser.is_admin && this.adminAuthorsMode === 'deleted') {
+            if (typeof this.loadDeletedAuthors === 'function') {
+              this.loadDeletedAuthors();
+            }
+          } else {
+            if (typeof this.loadAuthorsPage === 'function') {
+              this.loadAuthorsPage();
+            }
+          }
+        }
         if (hash === 'users' && this.currentUser && this.currentUser.is_admin) {
           this.loadUsers();
         }
@@ -108,15 +127,47 @@ export default {
   watch: {
     searchQuery() {
       this.booksPage = 1;
+      if (this.routePage === 'books') {
+        this.loadBooks();
+      }
     },
     authorFilterId() {
       this.booksPage = 1;
+      if (this.routePage === 'books') {
+        this.loadBooks();
+      }
     },
     sortKey() {
       this.booksPage = 1;
+      if (this.routePage === 'books') {
+        this.loadBooks();
+      }
+    },
+    deletedBooksSortKey() {
+      if (this.routePage === 'books' && this.currentUser && this.currentUser.is_admin && this.adminBooksMode === 'deleted') {
+        if (typeof this.loadDeletedBooks === 'function') {
+          this.loadDeletedBooks();
+        }
+      }
     },
     authorsSearchQuery() {
       this.authorsPage = 1;
+      if (this.routePage === 'authors' && !(this.currentUser && this.currentUser.is_admin && this.adminAuthorsMode === 'deleted')) {
+        this.loadAuthorsPage();
+      }
+    },
+    authorsSortKey() {
+      this.authorsPage = 1;
+      if (this.routePage === 'authors' && !(this.currentUser && this.currentUser.is_admin && this.adminAuthorsMode === 'deleted')) {
+        this.loadAuthorsPage();
+      }
+    },
+    deletedAuthorsSortKey() {
+      if (this.routePage === 'authors' && this.currentUser && this.currentUser.is_admin && this.adminAuthorsMode === 'deleted') {
+        if (typeof this.loadDeletedAuthors === 'function') {
+          this.loadDeletedAuthors();
+        }
+      }
     },
     routePage(val) {
       if (val === 'profile' && this.currentUser) {
@@ -124,7 +175,16 @@ export default {
         this.profileFormPhoto = this.currentUser.photo || '';
       }
     },
-    currentUser(val) {
+    currentUser(val, oldVal) {
+      const oldId = oldVal && oldVal.id != null ? String(oldVal.id) : '';
+      const newId = val && val.id != null ? String(val.id) : '';
+
+      if (newId !== oldId) {
+        if (typeof this.resetFiltersState === 'function') {
+          this.resetFiltersState();
+        }
+      }
+
       if (val) {
         this.profileFormName = val.name || '';
         this.profileFormPhoto = val.photo || '';

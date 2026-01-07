@@ -4,10 +4,13 @@ scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Date
 "Indicates what fields are available at the top level of a query operation."
 type Query {
     books(all: Boolean, per_page: Int): [Book!]! @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@books")
+    booksPage(per_page: Int!, page: Int, search: String, author_id: ID, sort: String): BooksPage! @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@booksPage")
     book(id: ID!): Book @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@book")
-    deletedBooks: [Book!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@deletedBooks")
+    deletedBooks(sort: String): [Book!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@deletedBooks")
     authors: [Author!]! @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@authors")
+    authorsPage(per_page: Int!, page: Int, search: String, sort: String): AuthorsPage! @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@authorsPage")
     author(id: ID!): Author @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@author")
+    deletedAuthors(sort: String): [Author!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@deletedAuthors")
     users(per_page: Int): [User!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@users")
     me: User @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@me")
     loans: [Loan!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@loans")
@@ -18,6 +21,25 @@ type Query {
     myOrders: [Order!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@myOrders")
     orders: [Order!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@orders")
     myCart: [CartItem!]! @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Queries\\LibraryQuery@myCart")
+}
+
+type PaginationInfo {
+    total: Int!
+    perPage: Int!
+    currentPage: Int!
+    lastPage: Int!
+    hasMorePages: Boolean!
+    count: Int!
+}
+
+type BooksPage {
+    data: [Book!]!
+    pageInfo: PaginationInfo!
+}
+
+type AuthorsPage {
+    data: [Author!]!
+    pageInfo: PaginationInfo!
 }
 
 "Account of a person who uses this application."
@@ -62,6 +84,7 @@ type Mutation {
     createAuthor(input: CreateAuthorInput!): Author @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@createAuthor")
     updateAuthor(id: ID!, input: UpdateAuthorInput!): Author @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@updateAuthor")
     deleteAuthor(id: ID!): MessagePayload @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@deleteAuthor")
+    restoreAuthor(id: ID!): Author @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@restoreAuthor")
 
     rentBook(input: RentBookInput!): Loan @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@rentBook")
     returnBook(id: ID!): Loan @guard(with: ["api"]) @field(resolver: "App\\GraphQL\\Mutations\\LibraryMutation@returnBook")

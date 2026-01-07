@@ -29,3 +29,6 @@ class Handler extends ExceptionHandler
     }
     public function render($request, Throwable $exception): JsonResponse|\Illuminate\Http\Response
     {
+        return parent::render($request, $exception);
+    }
+}

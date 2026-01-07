@@ -5,7 +5,7 @@
       style="width:auto; margin-bottom: 15px;"
       @click="$emit('goBack')"
     >
-      ← Voltar
+      {{ $t('navigation.back') }}
     </button>
 
     <div class="detail-container" style="display:grid; grid-template-columns: 300px 1fr; gap: 30px;">
@@ -25,13 +25,13 @@
             style="width:auto;"
             @click="$emit('openEditAuthor', selectedAuthor)"
           >
-            Editar
+            {{ $t('common.edit') }}
           </button>
         </div>
 
-        <p style="color:#666; line-height:1.6; margin-top:10px;">{{ selectedAuthor.bio || 'Sem biografia.' }}</p>
+        <p style="color:#666; line-height:1.6; margin-top:10px;">{{ selectedAuthor.bio || $t('authors.noBio') }}</p>
 
-        <h3 style="margin:20px 0 10px 0;">Livros</h3>
+        <h3 style="margin:20px 0 10px 0;">{{ $t('authors.booksHeading') }}</h3>
         <div class="book-grid">
           <div
             v-for="b in (selectedAuthor.books || [])"
@@ -41,7 +41,7 @@
             style="cursor:pointer;"
             @click="$emit('viewBook', b)"
           >
-            <div v-if="isBookUnavailable(b.id)" class="banner-rented">✅ ALUGADO</div>
+            <div v-if="isBookUnavailable(b.id)" class="banner-rented">{{ $t('books.bannerRented') }}</div>
             <img
               :src="thumb(b.photo, 600, 360, 'book')"
               :alt="b.title"

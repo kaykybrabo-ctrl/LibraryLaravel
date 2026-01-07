@@ -1,17 +1,17 @@
 <template>
   <div class="container">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-      <h2>🛒 Carrinho</h2>
+      <h2>{{ $t('cart.title') }}</h2>
       <button
         class="btn btn-small btn-secondary"
         style="width:auto;"
         @click="$emit('goBack')"
       >
-        ← Voltar para Livros
+        {{ $t('cart.backToBooks') }}
       </button>
     </div>
 
-    <div v-if="!cartItems || cartItems.length === 0" style="color:#666;">Seu carrinho está vazio.</div>
+    <div v-if="!cartItems || cartItems.length === 0" style="color:#666;">{{ $t('cart.empty') }}</div>
 
     <div v-else>
       <div
@@ -26,16 +26,16 @@
               @click="item.book && $emit('viewBook', item.book)"
             >
               <img
-                v-if="item.book && item.book.photo"
-                :src="thumb(item.book.photo, 300, 420)"
-                :alt="item.book.title"
+                :src="thumb(item.book && item.book.photo ? item.book.photo : '', 300, 420, 'book')"
+                :alt="item.book && item.book.title ? item.book.title : ''"
+                @error="$event.target.src = thumb('', 300, 420, 'book')"
                 style="width:100%; height:100%; object-fit:cover;"
               >
             </div>
             <div>
-              <div style="font-weight:600; color:#162c74;">{{ item.book && item.book.title ? item.book.title : 'Livro' }}</div>
+              <div style="font-weight:600; color:#162c74;">{{ item.book && item.book.title ? item.book.title : $t('loans.unknownBook') }}</div>
               <div style="color:#666; font-size:0.9rem; margin-top:4px;">
-                Quantidade:
+                {{ $t('cart.quantity') }}:
                 <button
                   class="btn btn-small btn-secondary"
                   style="width:auto; padding:2px 8px; margin-right:4px;"
@@ -56,24 +56,24 @@
           </div>
 
           <div style="text-align:right; min-width:160px;">
-            <div style="color:#666; font-size:0.9rem;">Preço: {{ getBookPrice(item.book).toFixed(2).replace('.', ',') }}</div>
-            <div style="color:#162c74; font-weight:700; margin-top:4px;">Subtotal: {{ (getBookPrice(item.book) * (item.quantity || 0)).toFixed(2).replace('.', ',') }}</div>
+            <div style="color:#666; font-size:0.9rem;">{{ $t('cart.unitPrice') }}: {{ $formatCurrency(getBookPrice(item.book)) }}</div>
+            <div style="color:#162c74; font-weight:700; margin-top:4px;">{{ $t('cart.subtotal') }}: {{ $formatCurrency(getBookPrice(item.book) * (item.quantity || 0)) }}</div>
             <button
               class="btn btn-small btn-danger"
               style="margin-top:6px; width:auto;"
               @click="$emit('remove', item.id)"
             >
-              Remover
+              {{ $t('cart.removeItem') }}
             </button>
           </div>
         </div>
       </div>
 
       <div style="display:flex; justify-content: space-between; align-items:center; margin-top: 12px;">
-        <div style="font-weight:700; color:#162c74;">Total: {{ cartTotalFormatted }}</div>
+        <div style="font-weight:700; color:#162c74;">{{ $t('cart.total') }}: {{ cartTotalFormatted }}</div>
         <div style="display:flex; gap:10px;">
-          <button class="btn btn-small btn-secondary" @click="$emit('clear')">Limpar</button>
-          <button class="btn btn-small" @click="$emit('checkout')">Finalizar compra (PIX)</button>
+          <button class="btn btn-small btn-secondary" @click="$emit('clear')">{{ $t('cart.clear') }}</button>
+          <button class="btn btn-small" @click="$emit('checkout')">{{ $t('cart.checkout') }} ({{ $t('cart.pixPayment') }})</button>
         </div>
       </div>
     </div>

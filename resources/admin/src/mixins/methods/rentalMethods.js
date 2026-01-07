@@ -36,7 +36,7 @@ export default {
     },
 
     async promptReturn(loanId) {
-      this.askDelete('loan', 'Deseja devolver este livro?', () => this.returnBook(loanId));
+      this.askDelete('loan', this.$t('loans.confirmReturn'), () => this.returnBook(loanId));
     },
 
     async returnBook(loanId) {
@@ -49,9 +49,9 @@ export default {
         );
         await this.loadUserLoans();
         await this.loadBooks();
-        this.successMessage = '✅ Livro devolvido com sucesso.';
+        this.successMessage = this.$t('messages.bookReturned');
       } catch (e) {
-        this.errorMessage = '❌ Não foi possível devolver o livro.';
+        this.errorMessage = this.$t('errors.returnFailed');
       }
     },
 
@@ -64,9 +64,9 @@ export default {
           { id: loanId }
         );
         await this.loadUserLoans();
-        this.successMessage = '✅ Livro devolvido com sucesso.';
+        this.successMessage = this.$t('messages.bookReturned');
       } catch (e) {
-        this.errorMessage = '❌ Não foi possível devolver o livro.';
+        this.errorMessage = this.$t('errors.returnFailed');
       }
     },
 

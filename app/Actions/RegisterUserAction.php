@@ -17,12 +17,12 @@ class RegisterUserAction
             ]);
             Log::info('User registered successfully', ['user_id' => $user->id]);
             return $user;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Failed to register user', [
                 'email' => $request->input('email'),
                 'error' => $e->getMessage()
             ]);
-            throw new \Exception('Failed to register user. Please try again.');
+            throw new \RuntimeException(__('errors.register_failed'), 0, $e);
         }
     }
 }

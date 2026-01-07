@@ -9,10 +9,13 @@ export default {
     },
 
     askDelete(type, message, callback) {
-      this.confirmTitle = type === 'book' ? 'Excluir Livro' : type === 'author' ? 'Excluir Autor' : 'Confirmar Ação';
-      this.confirmMessage = message || 'Esta ação não pode ser desfeita.';
-      this.confirmConfirmLabel = 'Confirmar';
-      this.confirmCancelLabel = 'Cancelar';
+      const entityKey = type === 'book' ? 'entities.book' : type === 'author' ? 'entities.author' : type === 'loan' ? 'entities.loan' : null;
+      this.confirmTitle = entityKey
+        ? `${this.$t('common.delete')} ${this.$t(entityKey)}`
+        : this.$t('common.confirmActionTitle');
+      this.confirmMessage = message || this.$t('common.actionCannotBeUndone');
+      this.confirmConfirmLabel = this.$t('common.confirm');
+      this.confirmCancelLabel = this.$t('common.cancel');
       this.confirmIsDanger = true;
       this.confirmCallback = typeof callback === 'function' ? callback : null;
       this.showConfirmModal = true;
@@ -81,7 +84,8 @@ export default {
       if (!this.userFavoriteBook) return;
       try {
         await this.graphql(
-          'mutation RemoveFavorite { removeFavorite }'
+          'mutation RemoveFavorite($userId: ID!) { removeFavorite(user_id: $userId) { message } }',
+          { userId: this.currentUser ? this.currentUser.id : null }
         );
         this.userFavoriteBook = null;
       } catch (e) {

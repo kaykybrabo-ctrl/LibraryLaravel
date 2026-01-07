@@ -4,12 +4,35 @@ export default {
       try {
         this.loading = true;
         const data = await this.graphql(
-          'query Books($all: Boolean) { books(all: $all) { id title description photo price created_at author { id name bio photo } } }',
-          { all: true },
+          'query BooksPage($per: Int!, $page: Int, $search: String, $authorId: ID, $sort: String) { booksPage(per_page: $per, page: $page, search: $search, author_id: $authorId, sort: $sort) { data { id title description photo price created_at author { id name bio photo } } pageInfo { total perPage currentPage lastPage hasMorePages count } } }',
+          {
+            per: this.booksPerPage || 12,
+            page: this.booksPage || 1,
+            search: this.searchQuery || null,
+            authorId: this.authorFilterId || null,
+            sort: this.sortKey || 'recent',
+          },
         );
-        this.books = data && Array.isArray(data.books) ? data.books : [];
+        const page = data && data.booksPage ? data.booksPage : null;
+        this.books = page && Array.isArray(page.data) ? page.data : [];
+        this.booksPageInfo = page && page.pageInfo ? page.pageInfo : {
+          total: 0,
+          perPage: this.booksPerPage || 12,
+          currentPage: this.booksPage || 1,
+          lastPage: 1,
+          hasMorePages: false,
+          count: 0,
+        };
       } catch (e) {
         this.books = [];
+        this.booksPageInfo = {
+          total: 0,
+          perPage: this.booksPerPage || 12,
+          currentPage: this.booksPage || 1,
+          lastPage: 1,
+          hasMorePages: false,
+          count: 0,
+        };
       } finally {
         this.loading = false;
       }
@@ -19,11 +42,48 @@ export default {
       try {
         this.authorsLoading = true;
         const data = await this.graphql(
-          'query Authors { authors { id name bio photo } }',
+          'query Authors { authors { id name } }',
         );
         this.authors = data && Array.isArray(data.authors) ? data.authors : [];
       } catch (e) {
         this.authors = [];
+      } finally {
+        this.authorsLoading = false;
+      }
+    },
+
+    async loadAuthorsPage() {
+      try {
+        this.authorsLoading = true;
+        const data = await this.graphql(
+          'query AuthorsPage($per: Int!, $page: Int, $search: String, $sort: String) { authorsPage(per_page: $per, page: $page, search: $search, sort: $sort) { data { id name bio photo books { id } } pageInfo { total perPage currentPage lastPage hasMorePages count } } }',
+          {
+            per: this.authorsPerPage || 12,
+            page: this.authorsPage || 1,
+            search: this.authorsSearchQuery || null,
+            sort: this.authorsSortKey || 'name',
+          },
+        );
+        const page = data && data.authorsPage ? data.authorsPage : null;
+        this.authorsPageData = page && Array.isArray(page.data) ? page.data : [];
+        this.authorsPageInfo = page && page.pageInfo ? page.pageInfo : {
+          total: 0,
+          perPage: this.authorsPerPage || 12,
+          currentPage: this.authorsPage || 1,
+          lastPage: 1,
+          hasMorePages: false,
+          count: 0,
+        };
+      } catch (e) {
+        this.authorsPageData = [];
+        this.authorsPageInfo = {
+          total: 0,
+          perPage: this.authorsPerPage || 12,
+          currentPage: this.authorsPage || 1,
+          lastPage: 1,
+          hasMorePages: false,
+          count: 0,
+        };
       } finally {
         this.authorsLoading = false;
       }

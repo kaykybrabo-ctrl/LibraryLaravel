@@ -5,6 +5,7 @@ use App\Http\Requests\LoginRequest;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Auth\AuthenticationException;
 class LoginUserAction
 {
     public function execute(LoginRequest $request): array
@@ -14,7 +15,7 @@ class LoginUserAction
             $user = User::where('email', $validated['email'])->first();
             if (!$user || !Hash::check($validated['password'], $user->password)) {
                 Log::warning('Login attempt failed', ['email' => $validated['email']]);
-                throw new \Exception('Invalid credentials');
+                throw new AuthenticationException(__('errors.invalid_credentials'));
             }
             $token = JWTAuth::fromUser($user);
             Log::info('User logged in successfully', ['user_id' => $user->id]);
@@ -22,7 +23,9 @@ class LoginUserAction
                 'user' => $user,
                 'token' => $token,
             ];
-        } catch (\Exception $e) {
+        } catch (AuthenticationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
             Log::error('Login failed', [
                 'email' => $request->input('email'),
                 'error' => $e->getMessage()

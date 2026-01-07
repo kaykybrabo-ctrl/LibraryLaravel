@@ -5,11 +5,19 @@ class BookRepository
 {
     public function allWithAuthor()
     {
-        return Book::query()->with('author')->get();
+        return Book::query()
+            ->with('author')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
     }
     public function paginateWithAuthor(int $perPage)
     {
-        return Book::query()->with('author')->paginate($perPage);
+        return Book::query()
+            ->with('author')
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate($perPage);
     }
     public function findWithAuthor(int $id)
     {

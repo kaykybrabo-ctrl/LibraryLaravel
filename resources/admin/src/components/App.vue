@@ -7,7 +7,7 @@
           <h1>PedBook</h1>
         </div>
         <div class="user-info">
-          <span>Olá, {{ currentUser.name }}!</span>
+          <span>{{ $t('common.hello') }}, {{ currentUser.name }}!</span>
           <div class="user-avatar" @click.stop="toggleDropdown">
             <img
               class="avatar"
@@ -17,51 +17,51 @@
             >
             <div class="user-menu-dropdown" v-if="showDropdown" @click.stop>
               <button class="dropdown-item" @click="goToPage('books'); showDropdown = false">
-                📖 Livros
+                {{ $t('navigation.books') }}
               </button>
               <button class="dropdown-item" @click="goToPage('authors'); showDropdown = false">
-                ✍️ Autores
+                {{ $t('navigation.authors') }}
               </button>
               <button
                 v-if="currentUser && currentUser.is_admin"
                 class="dropdown-item"
                 @click="goToPage('users'); showDropdown = false"
               >
-                👥 Usuários
+                {{ $t('navigation.users') }}
               </button>
               <button
                 v-if="currentUser && !currentUser.is_admin"
                 class="dropdown-item"
                 @click="goToPage('my-loans'); showDropdown = false"
               >
-                📚 Meus Empréstimos
+                {{ $t('navigation.loans') }}
               </button>
               <button
                 v-if="currentUser && !currentUser.is_admin"
                 class="dropdown-item"
                 @click="goToPage('cart'); showDropdown = false"
               >
-                🛒 Carrinho ({{ cartCount }})
+                {{ $t('navigation.cart') }} ({{ cartCount }})
               </button>
               <button
                 v-if="currentUser && currentUser.is_admin"
                 class="dropdown-item"
                 @click="goToPage('loans'); showDropdown = false"
               >
-                📋 Empréstimos
+                {{ $t('navigation.loans') }}
               </button>
               <button
                 v-if="currentUser && currentUser.is_admin"
                 class="dropdown-item"
                 @click="goToPage('sales'); showDropdown = false"
               >
-                💰 Vendas
+                {{ $t('navigation.sales') }}
               </button>
               <button class="dropdown-item" @click="goToPage('profile'); showDropdown = false">
-                👤 Meu Perfil
+                {{ $t('navigation.profile') }}
               </button>
               <button class="dropdown-logout" @click="logout">
-                🚪 Sair
+                {{ $t('auth.logout') }}
               </button>
             </div>
           </div>
@@ -76,9 +76,9 @@
           <h1>PedBook</h1>
         </div>
         <div style="display:flex; gap:10px;">
-          <button class="btn btn-small" @click="goToPage('books')">📖 Livros</button>
-          <button class="btn btn-small" @click="goToPage('authors')">✍️ Autores</button>
-          <button class="btn btn-small" @click="goToPage('login')">🔐 Entrar</button>
+          <button class="btn btn-small" @click="goToPage('books')">{{ $t('navigation.books') }}</button>
+          <button class="btn btn-small" @click="goToPage('authors')">{{ $t('navigation.authors') }}</button>
+          <button class="btn btn-small" @click="goToPage('login')">{{ $t('auth.login') }}</button>
         </div>
       </div>
     </header>
@@ -143,11 +143,12 @@
         :adminBooksMode="adminBooksMode"
         :deletedBooks="deletedBooks"
         :deletedBooksLoading="deletedBooksLoading"
+        :deletedBooksSortKey.sync="deletedBooksSortKey"
         :searchQuery.sync="searchQuery"
         :authorFilterId.sync="authorFilterId"
         :sortKey.sync="sortKey"
         :booksPerPage.sync="booksPerPage"
-        :filteredBooksLength="filteredBooks.length"
+        :filteredBooksLength="booksPageInfo && typeof booksPageInfo.total === 'number' ? booksPageInfo.total : filteredBooks.length"
         :paginatedBooks="paginatedBooks"
         :totalPages="totalPages"
         :booksPage="booksPage"
@@ -174,6 +175,10 @@
         v-else-if="routePage === 'book-detail' && selectedBook"
         :selectedBook="selectedBook"
         :currentUser="currentUser"
+
+        :reviews="bookReviews"
+        :reviewsLoading="bookReviewsLoading"
+
         :thumb="thumb"
         :getBookPrice="getBookPrice"
         :isBookBorrowedByMe="isBookBorrowedByMe"
@@ -187,6 +192,8 @@
         @toggleFavorite="toggleFavorite(selectedBook)"
         @addToCart="() => addToCart(selectedBook)"
         @goLogin="goToPage('login')"
+        @submitReview="submitReview"
+        @requestDeleteReview="requestDeleteReview"
       />
 
       <cart-page
@@ -207,7 +214,14 @@
         v-else-if="routePage === 'authors'"
         :currentUser="currentUser"
         :authorsLoading="authorsLoading"
+
+        :adminAuthorsMode="adminAuthorsMode"
+        :deletedAuthors="deletedAuthors"
+        :deletedAuthorsLoading="deletedAuthorsLoading"
+        :deletedAuthorsSortKey.sync="deletedAuthorsSortKey"
+
         :authorsSearchQuery.sync="authorsSearchQuery"
+        :authorsSortKey.sync="authorsSortKey"
         :authorsPerPage.sync="authorsPerPage"
         :paginatedAuthors="paginatedAuthors"
         :totalAuthorsPages="totalAuthorsPages"
@@ -217,6 +231,8 @@
         @select-author="selectAuthor"
         @openEditAuthor="openEditAuthor"
         @askDeleteAuthor="askDeleteAdmin('author', $event)"
+        @switchAdminAuthorsMode="switchAdminAuthorsMode"
+        @restoreDeletedAuthor="askRestoreAuthor"
         @changeAuthorsPage="changeAuthorsPage"
       />
 
@@ -281,8 +297,8 @@
         :format-date="formatDate"
         :is-loan-overdue="isLoanOverdue"
         @update:user-loans-filter="userLoansFilterSafe = $event"
-        @go-back="goToPage('books')"
-        @view-book="viewBook"
+        @goBack="goToPage('books')"
+        @viewBook="viewBook"
         @confirm-return-my-loan="requestReturnMyLoan"
       />
 
@@ -299,7 +315,7 @@
         @update:profile-form-photo="profileFormPhotoSafe = $event"
         @upload-profile-file="uploadProfileFile"
         @save-profile="saveProfileLocal"
-        @remove-favorite="removeFavorite"
+        @removeFavorite="removeFavorite"
         @select-author="selectAuthor"
         @view-book="viewBook"
       />
@@ -309,11 +325,8 @@
         class="container"
         style="padding-top: 40px; padding-bottom: 40px;"
       >
-        <h2 style="color:#162c74; margin-bottom:10px;">Área logada</h2>
-        <p style="color:#555; max-width:640px;">
-          A migração para Vue 2 + Vite está em andamento. As demais abas serão trazidas
-          para este componente nas próximas etapas.
-        </p>
+        <h2 style="color:#162c74; margin-bottom:10px;">{{ $t('home.loggedAreaTitle') }}</h2>
+        <p style="color:#555; max-width:640px;">{{ $t('home.loggedAreaDescription') }}</p>
       </div>
     </main>
 
@@ -375,7 +388,7 @@
 
     <confirm-modal
       :show="showConfirmModal"
-      :title="confirmTitle || 'Confirmar ação'"
+      :title="confirmTitle || $t('common.confirmActionTitle')"
       :message="confirmMessage"
       :confirmLabel="confirmConfirmLabel"
       :cancelLabel="confirmCancelLabel"
@@ -562,9 +575,24 @@ export default {
   watch: {
     booksPerPage() {
       this.booksPage = 1;
+      if (this.routePage === 'books') {
+        this.loadBooks();
+      }
     },
     authorsPerPage() {
       this.authorsPage = 1;
+      if (this.routePage === 'authors' && !(this.currentUser && this.currentUser.is_admin && this.adminAuthorsMode === 'deleted')) {
+        this.loadAuthorsPage();
+      }
+    },
+    successMessage(val) {
+      if (val && typeof val === 'string' && val.trim() && isBrowser) {
+        setTimeout(() => {
+          if (this.successMessage === val) {
+            this.successMessage = '';
+          }
+        }, 4000);
+      }
     },
   },
 
@@ -608,13 +636,13 @@ export default {
 
         if (this.newBookAuthorMode === 'existing') {
           if (!this.newBook.author_id) {
-            this.newBookError = 'Selecione um autor para o livro.';
+            this.newBookError = this.$t('errors.selectAuthorForBook');
             return;
           }
           payload.author_id = parseInt(this.newBook.author_id, 10);
         } else {
           if (!this.newAuthor.name) {
-            this.newBookError = 'Informe o nome do novo autor.';
+            this.newBookError = this.$t('errors.enterNewAuthorName');
             return;
           }
           payload.author_name = this.newAuthor.name;
@@ -636,9 +664,9 @@ export default {
         this.newAuthor = { name: '', bio: '', photo: '' };
         this.newBookError = '';
         this.errorMessage = '';
-        this.successMessage = '✅ Livro criado com sucesso.';
+        this.successMessage = this.$t('messages.bookCreatedSuccess');
       } catch (e) {
-        this.errorMessage = '❌ Não foi possível adicionar o livro. Tente novamente.';
+        this.errorMessage = this.$t('errors.bookCreateFailed');
       }
     },
 
@@ -674,7 +702,7 @@ export default {
           this.selectedBook = data && data.updateBook ? data.updateBook : this.selectedBook;
         }
       } catch (e) {
-        this.errorMessage = '❌ Não foi possível atualizar o livro.';
+        this.errorMessage = this.$t('errors.bookUpdateFailed');
       }
     },
 
@@ -685,10 +713,10 @@ export default {
           { id },
         );
         await this.loadBooks();
-        this.successMessage = '✅ Livro excluído com sucesso.';
+        this.successMessage = this.$t('messages.bookDeletedSuccess');
         this.errorMessage = '';
       } catch (e) {
-        this.errorMessage = '❌ Não foi possível excluir o livro.';
+        this.errorMessage = this.$t('errors.bookDeleteFailed');
       }
     },
 
@@ -700,7 +728,7 @@ export default {
         return undefined;
       };
 
-      this.askDelete(type, 'Tem certeza que deseja excluir?', doDelete);
+      this.askDelete(type, this.$t('admin.confirmDeletePrompt'), doDelete);
 
       return undefined;
     },
@@ -724,14 +752,14 @@ export default {
           localStorage.setItem('currentUser', JSON.stringify(updated));
         }
         this.editingProfile = false;
-        this.successMessage = '✅ Perfil atualizado com sucesso.';
+        this.successMessage = this.$t('messages.profileUpdated');
       } catch (e) {
         const msg = e && e.message ? String(e.message) : '';
         if (msg.toLowerCase().includes('unauthenticated')) {
           this.logout();
           return;
         }
-        this.errorMessage = `❌ Não foi possível atualizar o perfil. ${msg}`.trim();
+        this.errorMessage = `${this.$t('errors.profileUpdateFailed')} ${msg}`.trim();
       }
     },
 
@@ -740,11 +768,11 @@ export default {
         const file = evt && evt.target && evt.target.files ? evt.target.files[0] : null;
         if (!file) return;
         if (!file.type || !String(file.type).startsWith('image/')) {
-          this.errorMessage = '❌ Selecione um arquivo de imagem.';
+          this.errorMessage = this.$t('errors.selectImageFile');
           return;
         }
         if (file.size > 5 * 1024 * 1024) {
-          this.errorMessage = '❌ Tamanho máximo: 5MB.';
+          this.errorMessage = this.$t('errors.maxFileSize', { max: 5 });
           return;
         }
         this.errorMessage = '';
@@ -753,7 +781,7 @@ export default {
         const fileData = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => resolve(String(reader.result || ''));
-          reader.onerror = () => reject(new Error('Falha ao ler arquivo'));
+          reader.onerror = () => reject(new Error(this.$t('errors.fileReadFailed')));
           reader.readAsDataURL(file);
         });
 
@@ -768,7 +796,7 @@ export default {
 
         const publicId = data && data.uploadImage ? data.uploadImage : '';
         if (!publicId) {
-          this.errorMessage = '❌ Falha no upload.';
+          this.errorMessage = this.$t('errors.uploadFailed');
           return;
         }
 
@@ -776,32 +804,20 @@ export default {
         this.handleUploadSuccess(publicId);
 
         if (evt && evt.target) evt.target.value = '';
-        this.successMessage = '✅ Imagem enviada. Clique em Salvar para aplicar.';
+        this.successMessage = this.$t('messages.imageUploaded');
       } catch (e) {
         const msg = e && e.message ? String(e.message) : '';
         if (msg.toLowerCase().includes('unauthenticated')) {
           this.logout();
           return;
         }
-        this.errorMessage = `❌ Não foi possível enviar a imagem. ${msg}`.trim();
+        this.errorMessage = `${this.$t('errors.imageUploadFailed')} ${msg}`.trim();
       }
     },
 
     requestReturnMyLoan(loanId) {
       if (!loanId) return;
-      this.askDelete('loan', 'Deseja devolver este livro?', () => this.confirmReturnMyLoan(loanId));
-    },
-  },
-
-  watch: {
-    successMessage(val) {
-      if (val && typeof val === 'string' && val.trim() && isBrowser) {
-        setTimeout(() => {
-          if (this.successMessage === val) {
-            this.successMessage = '';
-          }
-        }, 4000);
-      }
+      this.askDelete('loan', this.$t('loans.confirmReturn'), () => this.confirmReturnMyLoan(loanId));
     },
   },
 
@@ -861,4 +877,7 @@ export default {
 </script>
 
 <style scoped>
+  [v-cloak] {
+    display: none;
+  }
 </style>

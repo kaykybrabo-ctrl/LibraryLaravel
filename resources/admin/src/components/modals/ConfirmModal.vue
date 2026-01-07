@@ -1,13 +1,13 @@
 <template>
-  <Modal :show="show" :title="title" @close="$emit('cancel')">
+  <Modal :show="show" :title="title || $t('common.confirmActionTitle')" @close="$emit('cancel')">
     <p>{{ message }}</p>
     
     <template #footer>
       <button class="btn btn-secondary" @click="$emit('cancel')">
-        {{ cancelText }}
+        {{ cancelText || $t('common.cancel') }}
       </button>
       <button class="btn btn-danger" @click="$emit('confirm')">
-        {{ confirmText }}
+        {{ confirmText || $t('common.confirm') }}
       </button>
     </template>
   </Modal>
@@ -23,7 +23,7 @@ export default {
     show: Boolean,
     title: {
       type: String,
-      default: 'Confirmar Ação'
+      default: ''
     },
     message: {
       type: String,
@@ -31,11 +31,11 @@ export default {
     },
     confirmText: {
       type: String,
-      default: 'Confirmar'
+      default: ''
     },
     cancelText: {
       type: String,
-      default: 'Cancelar'
+      default: ''
     }
   },
   emits: ['confirm', 'cancel']

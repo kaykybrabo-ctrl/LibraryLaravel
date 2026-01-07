@@ -2,23 +2,23 @@
   <div class="modal" :class="{ active: show }" @click.self="$emit('close')">
     <div class="modal-content">
       <div class="modal-header">
-        <h3 style="color:#162c74; font-weight:600;">Pagamento PIX Simulado</h3>
-        <button class="modal-close" @click="$emit('close')">✕</button>
+        <h3 style="color:#162c74; font-weight:600;">{{ $t('modals.pix.title') }}</h3>
+        <button class="modal-close" @click="$emit('close')">&times;</button>
       </div>
       <div class="modal-body">
         <div style="display:flex; flex-direction:column; gap:12px;">
           <div style="background:#f8f9fa; border-radius:8px; padding:12px;">
-            <div style="color:#666; line-height:1.5;">Valor</div>
+            <div style="color:#666; line-height:1.5;">{{ $t('modals.pix.amountLabel') }}</div>
             <div style="font-size:1.25rem; font-weight:700; color:#111827; margin-top:4px;">{{ pixAmountFormatted }}</div>
           </div>
 
           <p style="color:#666; line-height:1.5; margin:0;">
-            Use o código fictício abaixo como se fosse um PIX. Após "pagar", clique em <strong>Confirmar pagamento</strong>.
+            {{ $t('modals.pix.instructions') }} <strong>{{ $t('modals.pix.confirmPayment') }}</strong>.
           </p>
 
           <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-            <div style="color:#666; font-weight:600;">Código PIX (copia e cola)</div>
-            <button class="btn btn-small btn-secondary" type="button" @click="copyPixCode" style="width:auto;">Copiar</button>
+            <div style="color:#666; font-weight:600;">{{ $t('modals.pix.codeLabel') }}</div>
+            <button class="btn btn-small btn-secondary" type="button" @click="copyPixCode" style="width:auto;">{{ $t('modals.pix.copyButton') }}</button>
           </div>
 
           <div
@@ -28,12 +28,12 @@
           </div>
 
           <p style="color:#777; font-size:0.85rem; margin:0;">
-            Ambiente de testes. Nenhum pagamento real é realizado.
+            {{ $t('modals.pix.testingNotice') }}
           </p>
 
           <div style="display:flex; gap:10px; margin-top:4px;">
-            <button class="btn btn-small" @click="$emit('confirm')">Confirmar pagamento</button>
-            <button class="btn btn-small btn-secondary" @click="$emit('close')">Cancelar</button>
+            <button class="btn btn-small" @click="$emit('confirm')">{{ $t('modals.pix.confirmPayment') }}</button>
+            <button class="btn btn-small btn-secondary" @click="$emit('close')">{{ $t('common.cancel') }}</button>
           </div>
         </div>
       </div>

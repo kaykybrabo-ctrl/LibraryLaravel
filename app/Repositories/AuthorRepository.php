@@ -5,7 +5,11 @@ class AuthorRepository
 {
     public function allWithBooks()
     {
-        return Author::query()->with('books')->get();
+        return Author::query()
+            ->with('books')
+            ->orderBy('name')
+            ->orderBy('id')
+            ->get();
     }
     public function findWithBooks(int $id)
     {

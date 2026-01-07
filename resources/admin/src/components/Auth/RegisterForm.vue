@@ -1,9 +1,9 @@
 <template>
   <div>
-    <h2>Criar Conta</h2>
+    <h2>{{ $t('auth.register') }}</h2>
     <form @submit.prevent="$emit('submit')">
       <div class="form-group">
-        <label>Nome:</label>
+        <label>{{ $t('auth.name') }}:</label>
         <input
           type="text"
           :value="registerName"
@@ -12,7 +12,7 @@
         >
       </div>
       <div class="form-group">
-        <label>Email:</label>
+        <label>{{ $t('auth.email') }}:</label>
         <input
           type="email"
           :value="registerEmail"
@@ -21,7 +21,7 @@
         >
       </div>
       <div class="form-group">
-        <label>Senha:</label>
+        <label>{{ $t('auth.password') }}:</label>
         <div style="display:flex; gap:8px; align-items:center;">
           <input
             :type="registerPasswordVisible ? 'text' : 'password'"
@@ -36,12 +36,12 @@
             style="white-space: nowrap;"
             @click="$emit('update:registerPasswordVisible', !registerPasswordVisible)"
           >
-            {{ registerPasswordVisible ? 'Ocultar' : 'Mostrar' }}
+            {{ registerPasswordVisible ? $t('auth.hidePassword') : $t('auth.showPassword') }}
           </button>
         </div>
       </div>
       <div class="form-group">
-        <label>Confirmar Senha:</label>
+        <label>{{ $t('auth.confirmPassword') }}:</label>
         <div style="display:flex; gap:8px; align-items:center;">
           <input
             :type="registerPasswordVisible ? 'text' : 'password'"
@@ -56,25 +56,25 @@
             style="white-space: nowrap;"
             @click="$emit('update:registerPasswordVisible', !registerPasswordVisible)"
           >
-            {{ registerPasswordVisible ? 'Ocultar' : 'Mostrar' }}
+            {{ registerPasswordVisible ? $t('auth.hidePassword') : $t('auth.showPassword') }}
           </button>
         </div>
       </div>
       <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 4px;">
-        Criar Conta
+        {{ $t('auth.register') }}
       </button>
     </form>
 
     <p class="text-center mt-3">
-      Já tem conta?
-      <a href="#" @click.prevent="$emit('showLogin')">Entrar</a>
+      {{ $t('auth.alreadyHaveAccountQuestion') }}
+      <a href="#" @click.prevent="$emit('showLogin')">{{ $t('auth.login') }}</a>
     </p>
     <button
       class="btn btn-secondary"
       style="margin-top: 10px; width: 100%;"
       @click="$emit('goToLanding')"
     >
-      ← Voltar para Home
+      {{ $t('auth.backToHome') }}
     </button>
   </div>
 </template>

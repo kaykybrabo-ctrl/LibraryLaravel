@@ -30,6 +30,9 @@ class BookService
             ]);
             $data['author_id'] = $author->id;
         }
+        if (empty($data['description'] ?? null)) {
+            $data['description'] = 'Book description';
+        }
         if (empty($data['photo'] ?? null)) {
             $data['photo'] = 'pedbook/books/default-book';
         }
