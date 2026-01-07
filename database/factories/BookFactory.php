@@ -8,9 +8,13 @@ class BookFactory extends Factory
     protected $model = Book::class;
     public function definition(): array
     {
+        static $faker = null;
+        if (!$faker) {
+            $faker = \Faker\Factory::create('pt_BR');
+        }
         return [
-            'title' => $this->faker->sentence(3),
-            'description' => $this->faker->paragraph(3),
+            'title' => $faker->sentence(3),
+            'description' => $faker->paragraph(3),
             'photo' => 'pedbook/books/default-book',
             'author_id' => Author::factory(),
         ];

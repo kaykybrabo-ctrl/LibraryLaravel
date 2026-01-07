@@ -365,9 +365,13 @@
       :show="showEditBookModal"
       :authors="authors"
       :editBook="editBook"
-      @close="showEditBookModal = false"
+      :newAuthor="newAuthor"
+      :editBookAuthorMode.sync="editBookAuthorMode"
+      :editBookError="editBookError"
+      @close="showEditBookModal = false; editBookError = ''; editBookAuthorMode = 'existing'"
       @submit="saveEditBook"
       @upload="openUpload"
+      @clearError="editBookError = ''"
     />
 
     <create-author-modal
@@ -679,24 +683,63 @@ export default {
         photo: book.photo || '',
         price: typeof book.price === 'number' && book.price > 0 ? book.price : this.getBookPrice(book),
       };
+      this.editBookAuthorMode = 'existing';
+      this.editBookError = '';
+      this.newAuthor = { name: '', bio: '', photo: '' };
       this.showEditBookModal = true;
     },
 
     async saveEditBook() {
       try {
+        this.editBookError = '';
+
         const payload = {
           title: this.editBook.title,
           description: this.editBook.description,
-          author_id: parseInt(this.editBook.author_id, 10),
           photo: this.editBook.photo,
           price: this.editBook.price != null ? Number(this.editBook.price) : null,
         };
+
+        if (this.editBookAuthorMode === 'existing') {
+          if (!this.editBook.author_id) {
+            this.editBookError = this.$t('errors.selectAuthorForBook');
+            return;
+          }
+          payload.author_id = parseInt(this.editBook.author_id, 10);
+        } else {
+          if (!this.newAuthor || !this.newAuthor.name) {
+            this.editBookError = this.$t('errors.enterNewAuthorName');
+            return;
+          }
+
+          const authorData = await this.graphql(
+            'mutation CreateAuthor($input: CreateAuthorInput!) { createAuthor(input: $input) { id } }',
+            { input: { name: this.newAuthor.name, bio: this.newAuthor.bio || '', photo: this.newAuthor.photo || '' } },
+          );
+
+          const createdId = authorData && authorData.createAuthor && authorData.createAuthor.id ? authorData.createAuthor.id : '';
+          if (!createdId) {
+            this.editBookError = this.$t('errors.bookUpdateFailed');
+            return;
+          }
+
+          payload.author_id = parseInt(createdId, 10);
+          this.editBook.author_id = createdId;
+
+          await this.loadAuthors();
+          if (typeof this.loadAuthorsPage === 'function') {
+            await this.loadAuthorsPage();
+          }
+        }
 
         const data = await this.graphql(
           'mutation UpdateBook($id: ID!, $input: UpdateBookInput!) { updateBook(id: $id, input: $input) { id title description photo price author { id name bio photo } } }',
           { id: this.editBook.id, input: payload },
         );
         this.showEditBookModal = false;
+        this.editBookAuthorMode = 'existing';
+        this.editBookError = '';
+        this.newAuthor = { name: '', bio: '', photo: '' };
         await this.loadBooks();
         if (this.selectedBook && String(this.selectedBook.id) === String(this.editBook.id)) {
           this.selectedBook = data && data.updateBook ? data.updateBook : this.selectedBook;

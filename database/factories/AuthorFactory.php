@@ -7,9 +7,13 @@ class AuthorFactory extends Factory
     protected $model = Author::class;
     public function definition(): array
     {
+        static $faker = null;
+        if (!$faker) {
+            $faker = \Faker\Factory::create('pt_BR');
+        }
         return [
-            'name' => $this->faker->name(),
-            'bio' => $this->faker->paragraph(),
+            'name' => $faker->name(),
+            'bio' => $faker->paragraph(),
             'photo' => 'pedbook/profiles/default-user',
         ];
     }

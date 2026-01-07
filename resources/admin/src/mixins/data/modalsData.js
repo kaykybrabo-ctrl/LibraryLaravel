@@ -12,6 +12,8 @@ export default {
       showCreateBookModal: false,
       showEditBookModal: false,
       editBook: null,
+      editBookAuthorMode: 'existing',
+      editBookError: '',
       newBookAuthorMode: 'existing',
       newBookError: '',
       newBook: {

@@ -1,4 +1,4 @@
-<template>
+x1<template>
   <div class="loans-page">
     <div class="page-header">
       <h2>{{ $t('loans.title') }}</h2>
