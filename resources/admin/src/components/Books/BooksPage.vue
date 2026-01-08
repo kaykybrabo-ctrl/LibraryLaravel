@@ -128,7 +128,7 @@
 
     <div v-else-if="!(currentUser && currentUser.is_admin && adminBooksMode === 'deleted')">
       <p
-        v-if="filteredBooksLength === 0"
+        v-if="paginatedBooks.length === 0"
         class="text-center"
         style="color:#666;"
       >
@@ -296,7 +296,6 @@ export default {
     sortKey: { type: String, required: true },
     booksPerPage: { type: Number, required: true },
 
-    filteredBooksLength: { type: Number, required: true },
     paginatedBooks: { type: Array, required: true },
     totalPages: { type: Number, required: true },
     booksPage: { type: Number, required: true },

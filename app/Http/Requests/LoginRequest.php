@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Requests;
-use Illuminate\Foundation\Http\FormRequest;
-class LoginRequest extends FormRequest
+use App\Http\Requests\SanitizedFormRequest;
+class LoginRequest extends SanitizedFormRequest
 {
     public function authorize(): bool
     {

@@ -4,9 +4,10 @@ export default {
       return (book) => {
         if (book == null) return true;
         const id = (typeof book === 'object' && book !== null) ? book.id : book;
-        if (!id) return true;
-        const ids = Array.isArray(this.activeBookIds) ? this.activeBookIds : [];
-        return ids.includes(id);
+        if (id == null || id === '') return true;
+        const idStr = String(id);
+        const ids = Array.isArray(this.activeBookIds) ? this.activeBookIds.map(String) : [];
+        return ids.includes(idStr);
       };
     },
 
@@ -14,9 +15,17 @@ export default {
       return (book) => {
         if (book == null) return false;
         const id = (typeof book === 'object' && book !== null) ? book.id : book;
-        if (!id) return false;
+        if (id == null || id === '') return false;
+        const idStr = String(id);
         const loans = Array.isArray(this.userLoans) ? this.userLoans : [];
-        return loans.some(loan => loan && loan.book_id === id && !loan.returned_at);
+        return loans.some((loan) => {
+          if (!loan || loan.returned_at) return false;
+          const loanBookId = loan.book_id != null
+            ? loan.book_id
+            : (loan.book && loan.book.id != null ? loan.book.id : null);
+          if (loanBookId == null || loanBookId === '') return false;
+          return String(loanBookId) === idStr;
+        });
       };
     },
 
@@ -24,8 +33,12 @@ export default {
       return (book) => {
         if (book == null || !this.userFavoriteBook) return false;
         const id = (typeof book === 'object' && book !== null) ? book.id : book;
-        if (!id) return false;
-        return this.userFavoriteBook && this.userFavoriteBook.id === id;
+        if (id == null || id === '') return false;
+        const idStr = String(id);
+        const favId = this.userFavoriteBook && this.userFavoriteBook.id != null
+          ? String(this.userFavoriteBook.id)
+          : null;
+        return favId === idStr;
       };
     },
 

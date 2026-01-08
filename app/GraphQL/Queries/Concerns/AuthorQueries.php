@@ -17,34 +17,7 @@ trait AuthorQueries
         $search = trim((string) ($args['search'] ?? ''));
         $sort = strtolower(trim((string) ($args['sort'] ?? 'name')));
 
-        $query = Author::query()->with('books');
-
-        if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', '%' . $search . '%')
-                    ->orWhere('bio', 'like', '%' . $search . '%');
-            });
-        }
-
-        if ($sort === 'recent') {
-            $query->orderByDesc('created_at')->orderByDesc('id');
-        } else {
-            $query->orderBy('name')->orderBy('id');
-        }
-
-        $paginator = $query->paginate($perPage, ['*'], 'page', $page);
-
-        return [
-            'data' => $paginator->items(),
-            'pageInfo' => [
-                'total' => $paginator->total(),
-                'perPage' => $paginator->perPage(),
-                'currentPage' => $paginator->currentPage(),
-                'lastPage' => $paginator->lastPage(),
-                'hasMorePages' => $paginator->hasMorePages(),
-                'count' => $paginator->count(),
-            ],
-        ];
+        return $this->authors->page($perPage, $page, $search, $sort);
     }
 
     public function author($rootValue, array $args): Author

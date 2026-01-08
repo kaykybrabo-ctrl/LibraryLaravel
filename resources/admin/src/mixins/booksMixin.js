@@ -198,6 +198,7 @@ export default {
           }
         );
         await this.loadUserLoans();
+        await this.loadActiveBookIds();
         await this.loadBooks();
         this.closeRentModal();
       } catch (e) {
@@ -218,6 +219,7 @@ export default {
           { id: loanId }
         );
         await this.loadUserLoans();
+        await this.loadActiveBookIds();
         await this.loadBooks();
         this.successMessage = this.$t('messages.bookReturned');
       } catch (e) {
@@ -235,7 +237,7 @@ export default {
           { id: loanId }
         );
         await this.loadUserLoans();
-
+        await this.loadActiveBookIds();
         this.successMessage = this.$t('messages.bookReturned');
       } catch (e) {
 

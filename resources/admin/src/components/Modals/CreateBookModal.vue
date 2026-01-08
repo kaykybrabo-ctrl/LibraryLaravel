@@ -7,10 +7,16 @@
       </div>
       <div class="modal-body">
         <div v-if="newBookError" class="error" style="margin-bottom:10px;">{{ newBookError }}</div>
-        <form @submit.prevent="$emit('submit')" class="modal-form">
+        <form @submit.prevent="handleSubmit" class="modal-form">
           <div class="form-group">
             <label>{{ $t('books.title') }}:</label>
             <input type="text" v-model="newBook.title" required>
+            <div
+              v-if="localErrors.title"
+              style="color:#dc3545; font-size:0.85rem; margin-top:4px;"
+            >
+              {{ localErrors.title }}
+            </div>
           </div>
 
           <div class="modal-section">
@@ -43,12 +49,24 @@
                   <option value="">{{ $t('modals.createBook.selectAuthorPlaceholder') }}</option>
                   <option v-for="author in authors" :key="author.id" :value="author.id">{{ author.name }}</option>
                 </select>
+                <div
+                  v-if="localErrors.author"
+                  style="color:#dc3545; font-size:0.85rem; margin-top:4px;"
+                >
+                  {{ localErrors.author }}
+                </div>
               </div>
             </div>
             <div v-else>
               <div class="form-group">
                 <label>{{ $t('modals.createBook.newAuthorNameLabel') }}</label>
                 <input type="text" v-model="newAuthor.name" @input="$emit('clearError')">
+                <div
+                  v-if="localErrors.author"
+                  style="color:#dc3545; font-size:0.85rem; margin-top:4px;"
+                >
+                  {{ localErrors.author }}
+                </div>
               </div>
               <div class="form-group">
                 <label>{{ $t('modals.createBook.newAuthorBioLabel') }}</label>
@@ -68,6 +86,12 @@
             <div class="form-group">
               <label>{{ $t('books.description') }}:</label>
               <textarea v-model="newBook.description" rows="4" required></textarea>
+              <div
+                v-if="localErrors.description"
+                style="color:#dc3545; font-size:0.85rem; margin-top:4px;"
+              >
+                {{ localErrors.description }}
+              </div>
             </div>
             <div class="form-group">
               <label>{{ $t('modals.createBook.bookPhotoLabel') }}</label>
@@ -81,6 +105,12 @@
           <div class="form-group">
             <label>{{ $t('modals.createBook.priceLabel') }}</label>
             <input type="number" step="0.01" min="0" v-model.number="newBook.price">
+            <div
+              v-if="localErrors.price"
+              style="color:#dc3545; font-size:0.85rem; margin-top:4px;"
+            >
+              {{ localErrors.price }}
+            </div>
           </div>
 
           <button type="submit" class="btn btn-primary">{{ $t('common.save') }}</button>
@@ -100,6 +130,79 @@ export default {
     newAuthor: { type: Object, required: true },
     newBookError: { type: String, required: true },
     newBookAuthorMode: { type: String, required: true },
+  },
+  data() {
+    return {
+      localErrors: {
+        title: '',
+        description: '',
+        author: '',
+        price: '',
+      },
+    };
+  },
+  methods: {
+    handleSubmit() {
+      this.localErrors.title = '';
+      this.localErrors.description = '';
+      this.localErrors.author = '';
+      this.localErrors.price = '';
+
+      const title = (this.newBook.title || '').trim();
+      const description = (this.newBook.description || '').trim();
+      const authorMode = this.newBookAuthorMode;
+      const authorId = this.newBook.author_id;
+      const newAuthorName = this.newAuthor && this.newAuthor.name
+        ? this.newAuthor.name.trim()
+        : '';
+      const price = this.newBook.price;
+
+      const requiredMsg = this.$t
+        ? (this.$t('validation.required') || 'Campo obrigatório')
+        : 'Campo obrigatório';
+
+      if (!title) {
+        this.localErrors.title = requiredMsg;
+      }
+
+      if (!description) {
+        this.localErrors.description = requiredMsg;
+      }
+
+      if (authorMode === 'existing') {
+        if (!authorId) {
+          this.localErrors.author = requiredMsg;
+        }
+      } else if (authorMode === 'new') {
+        if (!newAuthorName) {
+          this.localErrors.author = requiredMsg;
+        }
+      }
+
+      if (price !== null && price !== undefined && price !== '') {
+        const numeric = Number(price);
+        if (Number.isNaN(numeric)) {
+          this.localErrors.price = this.$t
+            ? (this.$t('validation.numeric') || 'Valor inválido')
+            : 'Valor inválido';
+        } else if (numeric < 0) {
+          this.localErrors.price = this.$t
+            ? (this.$t('validation.min.numeric') || 'Valor não pode ser negativo')
+            : 'Valor não pode ser negativo';
+        }
+      }
+
+      if (
+        this.localErrors.title
+        || this.localErrors.description
+        || this.localErrors.author
+        || this.localErrors.price
+      ) {
+        return;
+      }
+
+      this.$emit('submit');
+    },
   },
 };
 </script>

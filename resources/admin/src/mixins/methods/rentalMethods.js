@@ -29,6 +29,7 @@ export default {
           }
         );
         await this.loadUserLoans();
+        await this.loadActiveBookIds();
         await this.loadBooks();
         this.closeRentModal();
       } catch (e) {
@@ -48,6 +49,7 @@ export default {
           { id: loanId }
         );
         await this.loadUserLoans();
+        await this.loadActiveBookIds();
         await this.loadBooks();
         this.successMessage = this.$t('messages.bookReturned');
       } catch (e) {
@@ -64,6 +66,7 @@ export default {
           { id: loanId }
         );
         await this.loadUserLoans();
+        await this.loadActiveBookIds();
         this.successMessage = this.$t('messages.bookReturned');
       } catch (e) {
         this.errorMessage = this.$t('errors.returnFailed');
@@ -72,8 +75,15 @@ export default {
 
     handleBookRentOrReturn(book) {
       if (this.isBookBorrowedByMe(book)) {
+        const bookId = book && book.id != null ? String(book.id) : null;
+        if (!bookId) return;
         const loan = Array.isArray(this.userLoans)
-          ? this.userLoans.find(l => (l.book_id === book.id || (l.book && l.book.id === book.id)) && !l.returned_at)
+          ? this.userLoans.find((l) => {
+            if (!l || l.returned_at) return false;
+            const loanBookId = l.book_id != null ? l.book_id : (l.book && l.book.id != null ? l.book.id : null);
+            if (loanBookId == null || loanBookId === '') return false;
+            return String(loanBookId) === bookId;
+          })
           : null;
 
         if (!loan || !loan.id) return;

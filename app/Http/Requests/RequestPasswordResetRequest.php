@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\SanitizedFormRequest;
 
-class RequestPasswordResetRequest extends FormRequest
+class RequestPasswordResetRequest extends SanitizedFormRequest
 {
     public function authorize(): bool
     {

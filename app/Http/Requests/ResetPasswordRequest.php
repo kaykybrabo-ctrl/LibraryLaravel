@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
+use App\Http\Requests\SanitizedFormRequest;
 
-class ResetPasswordRequest extends FormRequest
+class ResetPasswordRequest extends SanitizedFormRequest
 {
     public function authorize(): bool
     {
@@ -16,7 +16,14 @@ class ResetPasswordRequest extends FormRequest
         return [
             'email' => ['required', 'email'],
             'token' => ['required', 'string'],
-            'password' => ['required', 'string', 'min:3'],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/[A-Z]/',
+                'regex:/[a-z]/',
+                'regex:/[0-9]/',
+            ],
         ];
     }
 }

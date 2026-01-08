@@ -33,6 +33,9 @@ export default {
           hasMorePages: false,
           count: 0,
         };
+        if (!this.errorMessage) {
+          this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
+        }
       } finally {
         this.loading = false;
       }
@@ -47,6 +50,9 @@ export default {
         this.authors = data && Array.isArray(data.authors) ? data.authors : [];
       } catch (e) {
         this.authors = [];
+        if (!this.errorMessage) {
+          this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
+        }
       } finally {
         this.authorsLoading = false;
       }
@@ -84,6 +90,9 @@ export default {
           hasMorePages: false,
           count: 0,
         };
+        if (!this.errorMessage) {
+          this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
+        }
       } finally {
         this.authorsLoading = false;
       }
@@ -99,6 +108,9 @@ export default {
         this.cart = data && Array.isArray(data.myCart) ? data.myCart : [];
       } catch (e) {
         this.cart = [];
+        if (!this.errorMessage) {
+          this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
+        }
       }
     },
 
@@ -106,7 +118,6 @@ export default {
       try {
         if (!this.authToken || !this.currentUser || !this.currentUser.id) {
           this.userLoans = [];
-          this.activeBookIds = [];
           return;
         }
 
@@ -115,13 +126,28 @@ export default {
           { user_id: this.currentUser.id },
         );
         this.userLoans = data && Array.isArray(data.userLoans) ? data.userLoans : [];
-        this.activeBookIds = this.userLoans
-          .filter(l => !l.returned_at)
-          .map(l => (l.book_id != null ? l.book_id : (l.book && l.book.id ? l.book.id : null)))
-          .filter(Boolean);
       } catch (e) {
         this.userLoans = [];
+        if (!this.errorMessage) {
+          this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
+        }
+      }
+    },
+
+    async loadActiveBookIds() {
+      try {
+        if (!this.authToken || !this.currentUser) {
+          this.activeBookIds = [];
+          return;
+        }
+
+        const data = await this.graphql('query ActiveBookIds { activeBookIds }');
+        this.activeBookIds = data && Array.isArray(data.activeBookIds) ? data.activeBookIds : [];
+      } catch (e) {
         this.activeBookIds = [];
+        if (!this.errorMessage) {
+          this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
+        }
       }
     },
 
@@ -139,6 +165,9 @@ export default {
         this.userFavoriteBook = data && data.favoriteBookByUser ? data.favoriteBookByUser : null;
       } catch (e) {
         this.userFavoriteBook = null;
+        if (!this.errorMessage) {
+          this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
+        }
       }
     },
 
@@ -152,6 +181,9 @@ export default {
         this.users = data && Array.isArray(data.users) ? data.users : [];
       } catch (e) {
         this.users = [];
+        if (!this.errorMessage) {
+          this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
+        }
       } finally {
         this.usersLoading = false;
       }
@@ -166,6 +198,9 @@ export default {
         this.allLoans = data && Array.isArray(data.loans) ? data.loans : [];
       } catch (e) {
         this.allLoans = [];
+        if (!this.errorMessage) {
+          this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
+        }
       } finally {
         this.allLoansLoading = false;
       }
@@ -180,6 +215,9 @@ export default {
         this.adminOrders = data && Array.isArray(data.orders) ? data.orders : [];
       } catch (e) {
         this.adminOrders = [];
+        if (!this.errorMessage) {
+          this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
+        }
       } finally {
         this.adminOrdersLoading = false;
       }
@@ -191,10 +229,13 @@ export default {
         await Promise.all([
           this.loadCart(),
           this.loadUserLoans(),
+          this.loadActiveBookIds(),
           this.loadFavoriteBook(),
         ]);
       } catch (e) {
-
+        if (!this.errorMessage) {
+          this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
+        }
       }
     },
   },

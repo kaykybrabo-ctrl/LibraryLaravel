@@ -1,5 +1,42 @@
 export default {
   methods: {
+    safeTrim(value) {
+      return typeof value === 'string' ? value.trim() : value;
+    },
+
+    setMutationError(contextKey, error) {
+      const hasT = typeof this.$t === 'function';
+      const baseMsg = hasT ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
+      const msg = error && error.message ? String(error.message).trim() : '';
+
+      if (contextKey === 'checkout') {
+        this.errorMessage = hasT ? this.$t('errors.checkoutFailed') : baseMsg;
+      } else if (contextKey === 'addToCart') {
+        const prefix = hasT ? this.$t('errors.addToCartFailed') : baseMsg;
+        this.errorMessage = `${prefix} ${msg}`.trim();
+      } else if (contextKey === 'bookCreate') {
+        this.errorMessage = hasT ? this.$t('errors.bookCreateFailed') : baseMsg;
+      } else if (contextKey === 'bookUpdate') {
+        this.errorMessage = hasT ? this.$t('errors.bookUpdateFailed') : baseMsg;
+      } else if (contextKey === 'bookDelete') {
+        this.errorMessage = hasT ? this.$t('errors.bookDeleteFailed') : baseMsg;
+      } else if (contextKey === 'profileUpdate') {
+        const prefix = hasT ? this.$t('errors.profileUpdateFailed') : baseMsg;
+        this.errorMessage = msg ? `${prefix} ${msg}`.trim() : prefix;
+      } else if (contextKey === 'imageUpload') {
+        const prefix = hasT ? this.$t('errors.imageUploadFailed') : baseMsg;
+        this.errorMessage = msg ? `${prefix} ${msg}`.trim() : prefix;
+      } else if (contextKey === 'reviewSave') {
+        const prefix = hasT ? this.$t('errors.serverError') : baseMsg;
+        this.errorMessage = msg ? `${prefix} ${msg}`.trim() : prefix;
+      } else if (contextKey === 'reviewDelete') {
+        const prefix = hasT ? this.$t('errors.serverError') : baseMsg;
+        this.errorMessage = msg ? `${prefix} ${msg}`.trim() : prefix;
+      } else if (!this.errorMessage) {
+        this.errorMessage = baseMsg;
+      }
+    },
+
     thumb(url, w = 100, h = 100, kind = 'book') {
       try {
         const clean = (v) => String(v || '').trim();

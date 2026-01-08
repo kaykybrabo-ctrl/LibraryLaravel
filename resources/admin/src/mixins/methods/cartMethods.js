@@ -17,7 +17,7 @@ export default {
         await this.loadCart();
         this.successMessage = this.$t('messages.bookAddedToCart');
       } catch (e) {
-        this.errorMessage = `${this.$t('errors.addToCartFailed')} ${e && e.message ? e.message : ''}`.trim();
+        this.setMutationError('addToCart', e);
       }
     },
 
@@ -62,7 +62,7 @@ export default {
         await this.graphql('mutation { clearCart { message } }');
         await this.loadCart();
       } catch (e) {
-
+        this.setMutationError('checkout', e);
       }
     },
 
@@ -92,8 +92,7 @@ export default {
           this.successMessage = this.$t('messages.orderCreatedPix');
         }
       } catch (e) {
-
-        this.errorMessage = this.$t('errors.checkoutFailed');
+        this.setMutationError('checkout', e);
       }
     },
 

@@ -51,7 +51,7 @@ return [
         'default_count' => null,
         'max_count' => null,
     ],
-    'debug' => env('LIGHTHOUSE_DEBUG', GraphQL\Error\DebugFlag::INCLUDE_DEBUG_MESSAGE | GraphQL\Error\DebugFlag::INCLUDE_TRACE),
+    'debug' => env('LIGHTHOUSE_DEBUG', GraphQL\Error\DebugFlag::NONE),
     'error_handlers' => [
         App\GraphQL\ErrorHandlers\NotFoundErrorHandler::class,
         Nuwave\Lighthouse\Execution\AuthenticationErrorHandler::class,

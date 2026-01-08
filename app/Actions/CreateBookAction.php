@@ -4,8 +4,17 @@ use App\Models\Book;
 use App\Models\Author;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+
+/**
+ * Handles the transactional creation of a new book and, optionally, its author.
+ */
 class CreateBookAction
 {
+    /**
+     * Execute the book creation flow.
+     *
+     * @param array<string,mixed> $validatedData
+     */
     public function execute(array $validatedData): Book
     {
         try {

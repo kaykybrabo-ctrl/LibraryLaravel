@@ -6,14 +6,26 @@
         <button class="modal-close" @click="$emit('close')">&times;</button>
       </div>
       <div class="modal-body">
-        <form @submit.prevent="$emit('submit')">
+        <form @submit.prevent="handleSubmit">
           <div class="form-group">
             <label>{{ $t('auth.name') }}:</label>
             <input type="text" v-model="newAuthor.name" required>
+            <div
+              v-if="localErrors.name"
+              style="color:#dc3545; font-size:0.85rem; margin-top:4px;"
+            >
+              {{ localErrors.name }}
+            </div>
           </div>
           <div class="form-group">
             <label>{{ $t('modals.createAuthor.bioLabel') }}</label>
             <textarea v-model="newAuthor.bio" rows="4" required></textarea>
+            <div
+              v-if="localErrors.bio"
+              style="color:#dc3545; font-size:0.85rem; margin-top:4px;"
+            >
+              {{ localErrors.bio }}
+            </div>
           </div>
           <div class="form-group">
             <label>{{ $t('modals.createAuthor.photoLabel') }}</label>
@@ -35,6 +47,45 @@ export default {
   props: {
     show: { type: Boolean, required: true },
     newAuthor: { type: Object, required: true },
+  },
+  data() {
+    return {
+      localErrors: {
+        name: '',
+        bio: '',
+      },
+    };
+  },
+  methods: {
+    handleSubmit() {
+      this.localErrors.name = '';
+      this.localErrors.bio = '';
+
+      const name = this.newAuthor && this.newAuthor.name
+        ? this.newAuthor.name.trim()
+        : '';
+      const bio = this.newAuthor && this.newAuthor.bio
+        ? this.newAuthor.bio.trim()
+        : '';
+
+      const requiredMsg = this.$t
+        ? (this.$t('validation.required') || 'Campo obrigatório')
+        : 'Campo obrigatório';
+
+      if (!name) {
+        this.localErrors.name = requiredMsg;
+      }
+
+      if (!bio) {
+        this.localErrors.bio = requiredMsg;
+      }
+
+      if (this.localErrors.name || this.localErrors.bio) {
+        return;
+      }
+
+      this.$emit('submit');
+    },
   },
 };
 </script>

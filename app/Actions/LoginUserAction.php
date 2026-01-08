@@ -6,8 +6,17 @@ use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Auth\AuthenticationException;
+
+/**
+ * Handles user authentication and JWT token generation.
+ */
 class LoginUserAction
 {
+    /**
+     * Attempt to log a user in using the provided credentials.
+     *
+     * @return array{user: User, token: string}
+     */
     public function execute(LoginRequest $request): array
     {
         try {

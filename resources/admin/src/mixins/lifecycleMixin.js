@@ -74,6 +74,7 @@ export default {
               await this.viewBook(data.book);
             }
           } catch (e) {
+            this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Failed to load book';
           }
         }
       }
@@ -90,7 +91,7 @@ export default {
               await this.selectAuthor(data.author);
             }
           } catch (e) {
-
+            this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Failed to load author';
           }
         }
       }

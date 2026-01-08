@@ -25,10 +25,49 @@ export default {
       this.deletedAuthorsSortKey = 'recent';
     },
 
+    resetAuthUiState() {
+      this.errorMessage = '';
+      this.successMessage = '';
+      this.authFieldErrors = {};
+    },
+
+    extractAuthFieldErrors(e) {
+      const errors =
+        e &&
+        (e.validationErrors ||
+          (e.meta && e.meta.errors) ||
+          (e.extensions && e.extensions.meta && e.extensions.meta.errors));
+
+      if (errors && typeof errors === 'object') {
+        return errors;
+      }
+
+      return {};
+    },
+
+    getAuthErrorMessage(e) {
+      const msg = e && e.message ? String(e.message).trim() : '';
+      const code = e && e.code ? String(e.code) : '';
+
+      if (code === 'invalid_credentials') return this.$t('errors.invalidCredentials');
+      if (code === 'invalid_token') return this.$t('errors.invalidToken');
+      if (code === 'user_not_found') return this.$t('errors.userNotFound');
+
+      if (msg) return msg;
+      return this.$t('errors.serverError');
+    },
+
+    handleAuthError(e) {
+      this.authFieldErrors = this.extractAuthFieldErrors(e);
+      this.errorMessage = this.getAuthErrorMessage(e);
+      this.successMessage = '';
+    },
+
     async handleLogin() {
+      if (this.authLoading) return;
+      this.authLoading = true;
       try {
-        this.errorMessage = '';
-        this.successMessage = '';
+        this.resetAuthUiState();
 
         const data = await this.graphql(
           'mutation Login($input: LoginInput!) { login(input: $input) { token user { id name email is_admin photo } } }',
@@ -57,26 +96,30 @@ export default {
           await this.loadAuthors();
           await this.loadCart();
           await this.loadUserLoans();
+          await this.loadActiveBookIds();
           await this.loadFavoriteBook();
         } else {
-          this.errorMessage = this.$t('errors.invalidCredentials');
-          this.successMessage = '';
+          this.handleAuthError({ code: 'invalid_credentials' });
         }
       } catch (e) {
-        this.errorMessage = `${this.$t('errors.serverError')} ${e && e.message ? e.message : ''}`.trim();
-        this.successMessage = '';
+        this.handleAuthError(e);
+      } finally {
+        this.authLoading = false;
       }
     },
 
     async handleRegister() {
+      if (this.authLoading) return;
       try {
-        this.errorMessage = '';
-        this.successMessage = '';
+        this.resetAuthUiState();
 
         if (this.registerForm.password !== this.registerForm.password_confirmation) {
           this.errorMessage = this.$t('errors.passwordMismatch');
+          this.authFieldErrors = { password_confirmation: [this.errorMessage] };
           return;
         }
+
+        this.authLoading = true;
 
         const data = await this.graphql(
           'mutation Register($input: RegisterInput!) { register(input: $input) { message } }',
@@ -102,22 +145,24 @@ export default {
             window.location.hash = 'login';
           }
         } else {
-          this.errorMessage = this.$t('errors.serverError');
-          this.successMessage = '';
+          this.handleAuthError({});
         }
       } catch (e) {
-        this.errorMessage = `${this.$t('errors.serverError')} ${e && e.message ? e.message : ''}`.trim();
-        this.successMessage = '';
+        this.handleAuthError(e);
+      } finally {
+        this.authLoading = false;
       }
     },
 
     async handleRequestPasswordReset() {
+      if (this.authLoading) return;
+      this.authLoading = true;
       try {
-        this.errorMessage = '';
-        this.successMessage = '';
+        this.resetAuthUiState();
 
         if (!this.forgotEmail) {
           this.errorMessage = this.$t('errors.emailRequired');
+          this.authFieldErrors = { email: [this.errorMessage] };
           return;
         }
 
@@ -131,27 +176,33 @@ export default {
           this.errorMessage = '';
           this.forgotEmail = '';
         } else {
-          this.errorMessage = this.$t('errors.serverError');
-          this.successMessage = '';
+          this.handleAuthError({});
         }
       } catch (e) {
-        this.errorMessage = `${this.$t('errors.serverError')} ${e && e.message ? e.message : ''}`.trim();
-        this.successMessage = '';
+        this.handleAuthError(e);
+      } finally {
+        this.authLoading = false;
       }
     },
 
     async handleResetPassword() {
+      if (this.authLoading) return;
+      this.authLoading = true;
       try {
-        this.errorMessage = '';
-        this.successMessage = '';
+        this.resetAuthUiState();
 
         if (!this.resetToken || !this.resetNewPassword || !this.resetNewPasswordConfirm) {
           this.errorMessage = this.$t('forms.required');
+          this.authFieldErrors = {
+            password: !this.resetNewPassword ? [this.errorMessage] : undefined,
+            password_confirmation: !this.resetNewPasswordConfirm ? [this.errorMessage] : undefined,
+          };
           return;
         }
 
         if (this.resetNewPassword !== this.resetNewPasswordConfirm) {
           this.errorMessage = this.$t('errors.passwordMismatch');
+          this.authFieldErrors = { password_confirmation: [this.errorMessage] };
           return;
         }
 
@@ -175,20 +226,19 @@ export default {
             window.location.hash = 'login';
           }
         } else {
-          this.errorMessage = this.$t('errors.invalidToken');
-          this.successMessage = '';
+          this.handleAuthError({ code: 'invalid_token' });
         }
       } catch (e) {
-        this.errorMessage = `${this.$t('errors.serverError')} ${e && e.message ? e.message : ''}`.trim();
-        this.successMessage = '';
+        this.handleAuthError(e);
+      } finally {
+        this.authLoading = false;
       }
     },
 
     openResetRequest() {
       this.showRegister = false;
       this.showResetForm = true;
-      this.errorMessage = '';
-      this.successMessage = '';
+      this.resetAuthUiState();
       this.forgotEmail = this.loginForm.email || '';
     },
 
@@ -198,6 +248,8 @@ export default {
       this.resetEmail = '';
       this.resetNewPassword = '';
       this.resetNewPasswordConfirm = '';
+      this.errorMessage = '';
+      this.authFieldErrors = {};
     },
 
     logout() {

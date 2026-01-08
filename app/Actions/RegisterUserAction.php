@@ -4,8 +4,15 @@ use App\Models\User;
 use App\Http\Requests\RegisterRequest;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+
+/**
+ * Handles the user registration flow.
+ */
 class RegisterUserAction
 {
+    /**
+     * Register a new user using validated request data.
+     */
     public function execute(RegisterRequest $request): User
     {
         try {

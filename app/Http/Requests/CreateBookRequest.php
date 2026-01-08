@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Requests;
-use Illuminate\Foundation\Http\FormRequest;
-class CreateBookRequest extends FormRequest
+use App\Http\Requests\SanitizedFormRequest;
+class CreateBookRequest extends SanitizedFormRequest
 {
     public function authorize(): bool
     {
@@ -15,6 +15,8 @@ class CreateBookRequest extends FormRequest
                 'author_name' => $this->input('new_author_name'),
             ]);
         }
+
+        parent::prepareForValidation();
     }
 
     public function rules(): array

@@ -13,6 +13,9 @@ return new class extends Migration
             $table->date('loan_date');
             $table->date('return_date');
             $table->date('returned_at')->nullable();
+            $table->index('returned_at');
+            $table->index(['book_id', 'returned_at']);
+            $table->index(['user_id', 'returned_at']);
             $table->softDeletes();
             $table->timestamps();
         });

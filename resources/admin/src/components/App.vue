@@ -95,9 +95,11 @@
           :loginEmail.sync="loginEmail"
           :loginPassword.sync="loginPassword"
           :loginPasswordVisible.sync="loginPasswordVisible"
+          :loading="authLoading"
+          :fieldErrors="authFieldErrors"
           @submit="handleLogin"
           @openReset="openResetRequest"
-          @showRegister="showRegister = true"
+          @showRegister="showRegister = true; resetAuthUiState()"
           @goToLanding="goToLanding"
         />
 
@@ -110,6 +112,8 @@
           :resetNewPasswordConfirm.sync="resetNewPasswordConfirm"
           :resetPasswordVisible.sync="resetPasswordVisible"
           :resetPasswordConfirmVisible.sync="resetPasswordConfirmVisible"
+          :loading="authLoading"
+          :fieldErrors="authFieldErrors"
           @requestReset="handleRequestPasswordReset"
           @submitNewPassword="handleResetPassword"
           @backToLogin="closeResetForm"
@@ -118,13 +122,15 @@
 
         <register-form
           v-else
-          :register-name.sync="registerForm.name"
-          :register-email.sync="registerForm.email"
-          :register-password.sync="registerForm.password"
-          :register-password-confirmation.sync="registerForm.password_confirmation"
-          :register-password-visible.sync="registerPasswordVisible"
+          :registerName.sync="registerForm.name"
+          :registerEmail.sync="registerForm.email"
+          :registerPassword.sync="registerForm.password"
+          :registerPasswordConfirmation.sync="registerForm.password_confirmation"
+          :registerPasswordVisible.sync="registerPasswordVisible"
+          :loading="authLoading"
+          :fieldErrors="authFieldErrors"
           @submit="handleRegister"
-          @showLogin="showRegister = false"
+          @showLogin="showRegister = false; resetAuthUiState()"
           @goToLanding="goToLanding"
         />
       </div>
@@ -148,7 +154,6 @@
         :authorFilterId.sync="authorFilterId"
         :sortKey.sync="sortKey"
         :booksPerPage.sync="booksPerPage"
-        :filteredBooksLength="booksPageInfo && typeof booksPageInfo.total === 'number' ? booksPageInfo.total : filteredBooks.length"
         :paginatedBooks="paginatedBooks"
         :totalPages="totalPages"
         :booksPage="booksPage"
@@ -434,15 +439,7 @@ import ProfilePage from './Profile/ProfilePage.vue';
 import UploadModal from './Modals/UploadModal.vue';
 import HomePage from './Home/HomePage.vue';
 import graphqlMixin from '../mixins/graphqlMixin';
-import utilsMixin from '../mixins/utilsMixin';
-import dataMixin from '../mixins/combined/dataMixin';
-import computedMixin from '../mixins/combined/computedMixin';
-import authMixin from '../mixins/authMixin';
-import loadersMixin from '../mixins/loadersMixin';
-import booksMixin from '../mixins/combined/booksMixin';
-import adminMixin from '../mixins/adminMixin';
-import uiMixin from '../mixins/uiMixin';
-import lifecycleMixin from '../mixins/lifecycleMixin';
+import appCombinedMixin from '../mixins/appCombinedMixin';
 
 const isBrowser = typeof window !== 'undefined';
 
@@ -475,7 +472,7 @@ export default {
     UploadModal,
   },
 
-  mixins: [graphqlMixin, utilsMixin, dataMixin, computedMixin, authMixin, loadersMixin, booksMixin, adminMixin, uiMixin, lifecycleMixin],
+  mixins: [graphqlMixin, appCombinedMixin],
 
   data() {
     return {
@@ -509,11 +506,7 @@ export default {
       },
       set(v) {
         const next = typeof v === 'string' && v ? v : 'all';
-        if (this.userLoansFilter == null) {
-          this.$set(this, 'userLoansFilter', next);
-        } else {
-          this.userLoansFilter = next;
-        }
+        this.userLoansFilter = next;
       },
     },
     adminLoansFilterSafe: {
@@ -522,11 +515,7 @@ export default {
       },
       set(v) {
         const next = typeof v === 'string' && v ? v : 'all';
-        if (this.adminLoansFilter == null) {
-          this.$set(this, 'adminLoansFilter', next);
-        } else {
-          this.adminLoansFilter = next;
-        }
+        this.adminLoansFilter = next;
       },
     },
     profileFormNameSafe: {
@@ -535,11 +524,7 @@ export default {
       },
       set(v) {
         const next = typeof v === 'string' ? v : '';
-        if (this.profileFormName == null) {
-          this.$set(this, 'profileFormName', next);
-        } else {
-          this.profileFormName = next;
-        }
+        this.profileFormName = next;
       },
     },
     profileFormPhotoSafe: {
@@ -548,11 +533,7 @@ export default {
       },
       set(v) {
         const next = typeof v === 'string' ? v : '';
-        if (this.profileFormPhoto == null) {
-          this.$set(this, 'profileFormPhoto', next);
-        } else {
-          this.profileFormPhoto = next;
-        }
+        this.profileFormPhoto = next;
       },
     },
     loginEmail: {
@@ -560,8 +541,10 @@ export default {
         return this.loginForm && typeof this.loginForm.email === 'string' ? this.loginForm.email : '';
       },
       set(v) {
-        if (!this.loginForm) this.$set(this, 'loginForm', { email: '', password: '' });
-        this.$set(this.loginForm, 'email', v || '');
+        if (!this.loginForm) {
+          this.loginForm = { email: '', password: '' };
+        }
+        this.loginForm.email = v || '';
       },
     },
 
@@ -570,8 +553,10 @@ export default {
         return this.loginForm && typeof this.loginForm.password === 'string' ? this.loginForm.password : '';
       },
       set(v) {
-        if (!this.loginForm) this.$set(this, 'loginForm', { email: '', password: '' });
-        this.$set(this.loginForm, 'password', v || '');
+        if (!this.loginForm) {
+          this.loginForm = { email: '', password: '' };
+        }
+        this.loginForm.password = v || '';
       },
     },
   },
@@ -632,9 +617,9 @@ export default {
         this.newBookError = '';
 
         const payload = {
-          title: this.newBook.title,
-          description: this.newBook.description || '',
-          photo: this.newBook.photo || '',
+          title: this.safeTrim(this.newBook.title || ''),
+          description: this.safeTrim(this.newBook.description || ''),
+          photo: this.safeTrim(this.newBook.photo || ''),
           price: this.newBook.price != null ? Number(this.newBook.price) : null,
         };
 
@@ -645,13 +630,14 @@ export default {
           }
           payload.author_id = parseInt(this.newBook.author_id, 10);
         } else {
-          if (!this.newAuthor.name) {
+          const newAuthorName = this.safeTrim(this.newAuthor.name || '');
+          if (!newAuthorName) {
             this.newBookError = this.$t('errors.enterNewAuthorName');
             return;
           }
-          payload.author_name = this.newAuthor.name;
-          payload.author_bio = this.newAuthor.bio || '';
-          payload.author_photo = this.newAuthor.photo || '';
+          payload.author_name = newAuthorName;
+          payload.author_bio = this.safeTrim(this.newAuthor.bio || '');
+          payload.author_photo = this.safeTrim(this.newAuthor.photo || '');
         }
 
         await this.graphql(
@@ -670,7 +656,7 @@ export default {
         this.errorMessage = '';
         this.successMessage = this.$t('messages.bookCreatedSuccess');
       } catch (e) {
-        this.errorMessage = this.$t('errors.bookCreateFailed');
+        this.setMutationError('bookCreate', e);
       }
     },
 
@@ -694,9 +680,9 @@ export default {
         this.editBookError = '';
 
         const payload = {
-          title: this.editBook.title,
-          description: this.editBook.description,
-          photo: this.editBook.photo,
+          title: this.safeTrim(this.editBook.title || ''),
+          description: this.safeTrim(this.editBook.description || ''),
+          photo: this.safeTrim(this.editBook.photo || ''),
           price: this.editBook.price != null ? Number(this.editBook.price) : null,
         };
 
@@ -707,14 +693,21 @@ export default {
           }
           payload.author_id = parseInt(this.editBook.author_id, 10);
         } else {
-          if (!this.newAuthor || !this.newAuthor.name) {
+          const newAuthorName = this.safeTrim((this.newAuthor && this.newAuthor.name) || '');
+          if (!this.newAuthor || !newAuthorName) {
             this.editBookError = this.$t('errors.enterNewAuthorName');
             return;
           }
 
           const authorData = await this.graphql(
             'mutation CreateAuthor($input: CreateAuthorInput!) { createAuthor(input: $input) { id } }',
-            { input: { name: this.newAuthor.name, bio: this.newAuthor.bio || '', photo: this.newAuthor.photo || '' } },
+            {
+              input: {
+                name: newAuthorName,
+                bio: this.safeTrim(this.newAuthor.bio || ''),
+                photo: this.safeTrim(this.newAuthor.photo || ''),
+              },
+            },
           );
 
           const createdId = authorData && authorData.createAuthor && authorData.createAuthor.id ? authorData.createAuthor.id : '';
@@ -745,7 +738,7 @@ export default {
           this.selectedBook = data && data.updateBook ? data.updateBook : this.selectedBook;
         }
       } catch (e) {
-        this.errorMessage = this.$t('errors.bookUpdateFailed');
+        this.setMutationError('bookUpdate', e);
       }
     },
 
@@ -832,7 +825,7 @@ export default {
           'mutation UploadImage($target: String!, $filename: String!, $fileData: String!) { uploadImage(target: $target, filename: $filename, fileData: $fileData) }',
           {
             target: 'profile',
-            filename: file.name || 'profile',
+            filename: this.safeTrim(file.name || 'profile'),
             fileData,
           }
         );
@@ -854,7 +847,7 @@ export default {
           this.logout();
           return;
         }
-        this.errorMessage = `${this.$t('errors.imageUploadFailed')} ${msg}`.trim();
+        this.setMutationError('imageUpload', e);
       }
     },
 

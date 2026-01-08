@@ -37,10 +37,10 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
@@ -72,12 +72,29 @@ class LibraryMutation
 
     protected function validatedInput(array $input, FormRequest $form): array
     {
-        $messages = method_exists($form, 'messages') ? $form->messages() : [];
-        $validator = Validator::make($input, $form->rules(), $messages);
-        if ($validator->fails()) {
-            throw new ClientException($validator->errors()->first(), 'validation_failed');
+        try {
+            $formRequest = $form::createFrom(request(), $form);
+            $formRequest->setContainer(app())->setRedirector(app('redirect'));
+            $formRequest->replace($input);
+            $formRequest->validateResolved();
+            return $formRequest->validated();
+        } catch (ValidationException $e) {
+            $errors = $e->errors();
+
+            $first = null;
+            foreach ($errors as $messages) {
+                if (!empty($messages)) {
+                    $first = (string) $messages[0];
+                    break;
+                }
+            }
+
+            if (!$first) {
+                $first = __('errors.validation_failed');
+            }
+
+            throw new ClientException($first, 'validation_failed', ['errors' => $errors]);
         }
-        return $validator->validated();
     }
 
     protected function requireUser(): User

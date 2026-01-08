@@ -76,7 +76,7 @@ export default {
         }
         this.editingProfile = false;
       } catch (e) {
-
+        this.errorMessage = this.$t ? this.$t('errors.profileUpdateFailed') : 'Failed to update profile';
       }
     },
 
@@ -89,7 +89,7 @@ export default {
         );
         this.userFavoriteBook = null;
       } catch (e) {
-
+        this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Failed to remove favorite';
       }
     },
 

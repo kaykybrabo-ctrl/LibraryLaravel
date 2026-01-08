@@ -2,8 +2,15 @@
 namespace App\Services\Notifications;
 use App\Models\Loan;
 use Illuminate\Support\Facades\Log;
+
+/**
+ * Book due notification strategy that logs notifications instead of sending them.
+ */
 class LogBookDueNotificationStrategy implements BookDueNotificationStrategy
 {
+    /**
+     * Log the due notification payload for the given loan.
+     */
     public function notify(Loan $loan, string $html): void
     {
         Log::info('book_due_notification', [

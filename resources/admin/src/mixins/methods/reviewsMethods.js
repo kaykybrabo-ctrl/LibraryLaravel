@@ -43,7 +43,7 @@ export default {
             input: {
               book_id: payload.book_id,
               rating,
-              comment: payload.comment != null ? String(payload.comment) : null,
+              comment: payload.comment != null ? this.safeTrim(String(payload.comment)) : null,
             },
           }
         );
@@ -54,8 +54,7 @@ export default {
 
         await this.loadBookReviews(payload.book_id);
       } catch (e) {
-        const msg = e && e.message ? String(e.message) : '';
-        this.errorMessage = `${this.$t('errors.serverError')} ${msg}`.trim();
+        this.setMutationError('reviewSave', e);
       }
     },
 
@@ -77,8 +76,7 @@ export default {
         this.successMessage = this.$t('messages.reviewDeleted');
         await this.loadBookReviews(bookId || (this.selectedBook && this.selectedBook.id ? this.selectedBook.id : null));
       } catch (e) {
-        const msg = e && e.message ? String(e.message) : '';
-        this.errorMessage = `${this.$t('errors.serverError')} ${msg}`.trim();
+        this.setMutationError('reviewDelete', e);
       }
     },
   },

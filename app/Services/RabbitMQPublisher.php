@@ -2,8 +2,17 @@
 namespace App\Services;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
+
+/**
+ * Service responsible for publishing messages to RabbitMQ queues.
+ */
 class RabbitMQPublisher
 {
+    /**
+     * Publish a JSON payload to a given queue.
+     *
+     * @param array<string,mixed> $payload
+     */
     public function publish(string $queue, array $payload): void
     {
         $config = config('rabbitmq');

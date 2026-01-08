@@ -10,7 +10,6 @@ class Book extends Model
     use HasFactory, SoftDeletes;
     protected $fillable = ['title', 'description', 'photo', 'price', 'author_id'];
     protected $hidden = ['created_at', 'updated_at'];
-    protected $with = ['author'];
     protected $casts = [
         'price' => 'float',
     ];
@@ -21,6 +20,12 @@ class Book extends Model
     public function loans(): HasMany
     {
         return $this->hasMany(Loan::class);
+    }
+    public function isBorrowed(): bool
+    {
+        return $this->loans()
+            ->whereNull('returned_at')
+            ->exists();
     }
     public function reviews(): HasMany
     {

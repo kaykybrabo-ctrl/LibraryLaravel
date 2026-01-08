@@ -5,7 +5,6 @@ use App\Exceptions\ClientException;
 use App\Http\Requests\CreateBookRequest;
 use App\Http\Requests\UpdateBookRequest;
 use App\Models\Book;
-use Illuminate\Support\Facades\Validator;
 
 trait BookMutations
 {
@@ -14,33 +13,14 @@ trait BookMutations
         $this->requireAdmin();
         $input = $args['input'] ?? $args;
         if (!is_array($input)) {
-            if ($input instanceof \Illuminate\Contracts\Support\Arrayable) {
-                $input = $input->toArray();
-            } elseif (is_object($input) && method_exists($input, 'toArray')) {
-                $input = $input->toArray();
-            } elseif ($input instanceof \JsonSerializable) {
-                $input = $input->jsonSerialize();
-            } elseif ($input instanceof \Traversable) {
-                $input = iterator_to_array($input);
-            } elseif (is_object($input)) {
-                $input = (array) $input;
-            }
-        }
-        if (!is_array($input)) {
-            $input = [];
+            $input = (array) $input;
         }
 
         if (empty($input['author_name'] ?? null) && !empty($input['new_author_name'] ?? null)) {
             $input['author_name'] = $input['new_author_name'];
         }
 
-        $form = new CreateBookRequest();
-        $validator = Validator::make($input, $form->rules(), $form->messages());
-        if ($validator->fails()) {
-            throw new ClientException($validator->errors()->first(), 'validation_failed');
-        }
-
-        $data = $validator->validated();
+        $data = $this->validatedInput($input, new CreateBookRequest());
         unset($data['new_author_name']);
 
         return $this->books->create($data);

@@ -7,8 +7,15 @@ use App\Http\Requests\BorrowBookRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
+
+/**
+ * Handles the business logic for borrowing a book.
+ */
 class BorrowBookAction
 {
+    /**
+     * Execute the borrow operation for a given user and validated request.
+     */
     public function execute(BorrowBookRequest $request, User $user): Loan
     {
         try {
