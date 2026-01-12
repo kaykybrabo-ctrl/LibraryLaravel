@@ -34,7 +34,7 @@
                 class="dropdown-item"
                 @click="goToPage('my-loans'); showDropdown = false"
               >
-                {{ $t('navigation.loans') }}
+                {{ $t('loans.title') }}
               </button>
               <button
                 v-if="currentUser && !currentUser.is_admin"
@@ -48,7 +48,7 @@
                 class="dropdown-item"
                 @click="goToPage('loans'); showDropdown = false"
               >
-                {{ $t('navigation.loans') }}
+                {{ $t('loans.adminTitle') }}
               </button>
               <button
                 v-if="currentUser && currentUser.is_admin"

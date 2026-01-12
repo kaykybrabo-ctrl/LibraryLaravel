@@ -12,11 +12,16 @@
         <div style="width: 100px; height: 100px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; overflow: hidden;">
           <img
             v-if="profileFormPhoto || (currentUser && currentUser.photo)"
-            :src="thumb(profileFormPhoto || currentUser.photo, 100, 100)"
+            :src="thumb(profileFormPhoto || currentUser.photo, 100, 100, 'user')"
             alt="avatar"
             style="width:100%; height:100%; object-fit: cover;"
           >
-          <span v-else aria-hidden="true">U</span>
+          <img
+            v-else
+            :src="thumb('', 100, 100, 'user')"
+            alt="avatar"
+            style="width:100%; height:100%; object-fit: cover;"
+          >
         </div>
         <div>
           <h3 style="margin: 0 0 5px 0; color: #162c74;">{{ currentUser.name }}</h3>

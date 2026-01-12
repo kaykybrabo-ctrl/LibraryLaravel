@@ -143,7 +143,16 @@
           :class="{ borrowed: isBookUnavailable(book.id) }"
           @click="$emit('viewBook', book)"
         >
-          <div v-if="isBookUnavailable(book.id)" class="banner-rented">{{ $t('books.bannerRented') }}</div>
+          <div
+            v-if="isBookUnavailable(book.id)"
+            class="banner-rented"
+            :class="{
+              'banner-rented-me': isBookBorrowedByMe(book.id),
+              'banner-rented-other': !isBookBorrowedByMe(book.id),
+            }"
+          >
+            {{ $t('books.bannerRented') }}
+          </div>
 
           <button
             v-if="currentUser && !currentUser.is_admin"
