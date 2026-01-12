@@ -26,4 +26,12 @@ class ResetPasswordRequest extends SanitizedFormRequest
             ],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'password.min' => 'A senha deve ter pelo menos :min caracteres.',
+            'password.regex' => 'A senha deve conter pelo menos uma letra maiúscula, uma letra minúscula e um número.',
+        ];
+    }
 }

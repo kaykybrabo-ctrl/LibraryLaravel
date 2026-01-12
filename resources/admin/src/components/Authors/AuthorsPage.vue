@@ -60,7 +60,12 @@
       </select>
     </div>
 
-    <div v-if="authorsLoading && !(currentUser && currentUser.is_admin && adminAuthorsMode === 'deleted')" class="text-center">{{ $t('authors.loading') }}</div>
+    <div
+      v-if="authorsLoading && !(currentUser && currentUser.is_admin && adminAuthorsMode === 'deleted')"
+      class="text-center"
+    >
+      <LoadingSpinner :text="$t('authors.loading')" />
+    </div>
 
     <div v-if="currentUser && currentUser.is_admin && adminAuthorsMode === 'deleted'">
       <div style="margin-bottom: 12px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;">

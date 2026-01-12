@@ -37,9 +37,12 @@ if [ "$ALWAYS_FRESH" = "true" ]; then
   php artisan migrate:fresh --force
   php artisan db:seed --force
 else
-  echo "[entrypoint] Running migrate --seed"
+  echo "[entrypoint] Running migrate"
   php artisan migrate --force
-  php artisan db:seed --force
+  if [ "$SEED_ON_BOOT" = "true" ]; then
+    echo "[entrypoint] Running db:seed (SEED_ON_BOOT=true)"
+    php artisan db:seed --force
+  fi
 fi
 
 cd public

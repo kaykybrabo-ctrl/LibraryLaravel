@@ -1,6 +1,9 @@
 <?php
 
 return [
+    'min' => [
+        'string' => 'O campo :attribute deve ter pelo menos :min caracteres.',
+    ],
     'custom' => [
         'title' => [
             'required' => 'O título é obrigatório.',
@@ -54,5 +57,11 @@ return [
             'max' => 'O nome do autor não pode ter mais de 255 caracteres.',
             'unique' => 'Já existe um autor com este nome.',
         ],
+        'password' => [
+            'min' => 'A senha deve ter pelo menos :min caracteres.',
+        ],
+    ],
+    'attributes' => [
+        'password' => 'senha',
     ],
 ];

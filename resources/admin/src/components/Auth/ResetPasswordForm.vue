@@ -200,7 +200,7 @@ export default {
       if (!password) {
         this.localErrors.password = this.$t ? this.$t('validation.required') || 'Senha é obrigatória' : 'Senha é obrigatória';
       } else if (password.length < 8) {
-        this.localErrors.password = this.$t ? this.$t('validation.min.string', { attribute: 'password', min: 8 }) || 'Senha deve ter pelo menos 8 caracteres' : 'Senha deve ter pelo menos 8 caracteres';
+        this.localErrors.password = 'Senha deve ter pelo menos 8 caracteres';
       }
 
       if (!passwordConfirmation) {

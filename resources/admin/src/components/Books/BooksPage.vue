@@ -122,8 +122,8 @@
       </div>
     </div>
 
-    <div v-if="loading">
-      <p class="text-center" style="color:#666;">{{ $t('books.loading') }}</p>
+    <div v-if="loading" class="text-center">
+      <LoadingSpinner :text="$t('books.loading')" />
     </div>
 
     <div v-else-if="!(currentUser && currentUser.is_admin && adminBooksMode === 'deleted')">

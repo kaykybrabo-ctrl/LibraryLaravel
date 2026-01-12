@@ -3,7 +3,9 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
       <h2>{{ $t('users.title') }}</h2>
     </div>
-    <div v-if="usersLoading" class="text-center">{{ $t('users.loading') }}</div>
+    <div v-if="usersLoading" class="text-center">
+      <LoadingSpinner :text="$t('users.loading')" />
+    </div>
     <div v-else>
       <div class="user-grid">
         <div v-for="u in paginatedUsers" :key="u.id" class="user-card" @click="$emit('open-user-profile', u)">

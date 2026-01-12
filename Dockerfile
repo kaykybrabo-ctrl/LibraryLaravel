@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install zip pdo pdo_sqlite sockets
+RUN docker-php-ext-install zip pdo pdo_mysql pdo_sqlite sockets
 RUN pecl install redis \
     && docker-php-ext-enable redis
 

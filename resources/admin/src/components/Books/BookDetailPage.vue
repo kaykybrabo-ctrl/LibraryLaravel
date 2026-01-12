@@ -102,8 +102,8 @@
         <div style="margin-top:16px; background:#f8f9fa; padding:12px; border-radius:8px;">
           <h3 style="margin:0 0 10px 0;">{{ $t('reviews.title') }}</h3>
 
-          <div v-if="reviewsLoading">
-            <p style="color:#666;">{{ $t('common.loading') }}</p>
+          <div v-if="reviewsLoading" class="text-center">
+            <LoadingSpinner :text="$t('common.loading')" />
           </div>
 
           <div v-else>

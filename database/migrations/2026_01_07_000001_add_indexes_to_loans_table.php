@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -17,6 +18,23 @@ return new class extends Migration
 
         if ($driver === 'sqlite') {
             $indexes = $connection->select("PRAGMA index_list('loans')");
+            foreach ($indexes as $index) {
+                $name = $index->name ?? null;
+                if ($name === 'loans_returned_at_index') {
+                    $hasReturnedAtIndex = true;
+                } elseif ($name === 'loans_book_id_returned_at_index') {
+                    $hasBookReturnedAtIndex = true;
+                } elseif ($name === 'loans_user_id_returned_at_index') {
+                    $hasUserReturnedAtIndex = true;
+                }
+            }
+        } elseif ($driver === 'mysql') {
+            $database = $connection->getDatabaseName();
+            $indexes = $connection->select(
+                'SELECT INDEX_NAME as name FROM information_schema.statistics WHERE table_schema = ? AND table_name = ?',
+                [$database, 'loans']
+            );
+
             foreach ($indexes as $index) {
                 $name = $index->name ?? null;
                 if ($name === 'loans_returned_at_index') {

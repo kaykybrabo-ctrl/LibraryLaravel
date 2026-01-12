@@ -8,25 +8,47 @@ services:
       - "8080:8080"
     volumes:
       - ./:/app
+      - /app/node_modules
+      - /app/vendor
     depends_on:
+      - mysql
       - redis
       - rabbitmq
     env_file:
       - .env
     environment:
-      - APP_ENV=local
-      - APP_DEBUG=1
-      - APP_URL=http://localhost:8080
-      - DB_CONNECTION=sqlite
-      - DB_DATABASE=/app/database/database.sqlite
-      - CACHE_DRIVER=redis
-      - QUEUE_CONNECTION=redis
-      - REDIS_CLIENT=phpredis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
-      - ALWAYS_FRESH=true
+      - ALWAYS_FRESH=${ALWAYS_FRESH:-false}
+      - SEED_ON_BOOT=${SEED_ON_BOOT:-true}
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "php -v > /dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+
+  mysql:
+    image: mysql:8.0
+    container_name: library_laravel_mysql
+    restart: unless-stopped
+    environment:
+      - MYSQL_DATABASE=${DB_DATABASE:-library}
+      - MYSQL_USER=${DB_USERNAME:-library}
+      - MYSQL_PASSWORD=${DB_PASSWORD:-secret}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-root}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
 
   vite:
     image: node:20-alpine
@@ -34,10 +56,13 @@ services:
     working_dir: /app
     volumes:
       - ./:/app
+      - /app/node_modules
     ports:
       - "5173:5173"
     command: sh -lc "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
     restart: unless-stopped
+    networks:
+      - app_network
 
   redis:
     image: redis:7-alpine
@@ -45,6 +70,13 @@ services:
     ports:
       - "6379:6379"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
 
   mailpit:
     profiles:
@@ -55,6 +87,8 @@ services:
       - "8025:8025"
       - "1025:1025"
     restart: unless-stopped
+    networks:
+      - app_network
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -67,6 +101,13 @@ services:
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-guest}
       - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_VHOST:-/}
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
 
   queue:
     container_name: library_laravel_queue
@@ -80,20 +121,16 @@ services:
       - .env
     volumes:
       - ./:/app
+      - /app/node_modules
+      - /app/vendor
     environment:
-      - APP_ENV=local
-      - APP_DEBUG=1
-      - APP_URL=http://localhost:8080
-      - DB_CONNECTION=sqlite
-      - DB_DATABASE=/app/database/database.sqlite
-      - CACHE_DRIVER=redis
-      - QUEUE_CONNECTION=redis
-      - REDIS_CLIENT=phpredis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
     command: sh -lc "php artisan queue:work --verbose --tries=3 --backoff=10 --sleep=1 --timeout=90"
     restart: unless-stopped
+    networks:
+      - app_network
 
   cli:
     build:
@@ -106,18 +143,12 @@ services:
       - tools
     volumes:
       - ./:/app
+      - /app/node_modules
+      - /app/vendor
     working_dir: /app
     env_file:
       - .env
     environment:
-      - APP_ENV=local
-      - APP_DEBUG=1
-      - APP_URL=http://localhost:8080
-      - DB_CONNECTION=sqlite
-      - DB_DATABASE=/app/database/database.sqlite
-      - CACHE_DRIVER=redis
-      - QUEUE_CONNECTION=redis
-      - REDIS_CLIENT=phpredis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
@@ -130,6 +161,8 @@ services:
       - RABBITMQ_CART_QUEUE=${RABBITMQ_CART_QUEUE:-cart_engagement}
     entrypoint: ["sh", "-lc"]
     command: ["php -v"]
+    networks:
+      - app_network
 
   scheduler:
     container_name: library_laravel_scheduler
@@ -143,20 +176,16 @@ services:
       - .env
     volumes:
       - ./:/app
+      - /app/node_modules
+      - /app/vendor
     environment:
-      - APP_ENV=local
-      - APP_DEBUG=1
-      - APP_URL=http://localhost:8080
-      - DB_CONNECTION=sqlite
-      - DB_DATABASE=/app/database/database.sqlite
-      - CACHE_DRIVER=redis
-      - QUEUE_CONNECTION=redis
-      - REDIS_CLIENT=phpredis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
     command: sh -lc "php artisan schedule:work"
     restart: unless-stopped
+    networks:
+      - app_network
 
   rabbitmq_due_consumer:
     container_name: library_laravel_rabbitmq_due_consumer
@@ -170,15 +199,9 @@ services:
       - .env
     volumes:
       - ./:/app
+      - /app/node_modules
+      - /app/vendor
     environment:
-      - APP_ENV=local
-      - APP_DEBUG=1
-      - APP_URL=http://localhost:8080
-      - DB_CONNECTION=sqlite
-      - DB_DATABASE=/app/database/database.sqlite
-      - CACHE_DRIVER=redis
-      - QUEUE_CONNECTION=redis
-      - REDIS_CLIENT=phpredis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
@@ -191,6 +214,8 @@ services:
       - RABBITMQ_CART_QUEUE=${RABBITMQ_CART_QUEUE:-cart_engagement}
     command: sh -lc "until php -r 'exit(@fsockopen(getenv(\"RABBITMQ_HOST\")?:\"rabbitmq\", (int)(getenv(\"RABBITMQ_PORT\")?:5672))?0:1);'; do echo 'waiting for rabbitmq...'; sleep 1; done; php artisan rabbitmq:consume-due"
     restart: unless-stopped
+    networks:
+      - app_network
 
   rabbitmq_cart_consumer:
     container_name: library_laravel_rabbitmq_cart_consumer
@@ -204,15 +229,10 @@ services:
       - .env
     volumes:
       - ./:/app
+      - /app/node_modules
+      - /app/vendor
     environment:
-      - APP_ENV=local
-      - APP_DEBUG=1
-      - APP_URL=http://localhost:8080
-      - DB_CONNECTION=sqlite
       - DB_DATABASE=/app/database/database.sqlite
-      - CACHE_DRIVER=redis
-      - QUEUE_CONNECTION=redis
-      - REDIS_CLIENT=phpredis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
@@ -225,3 +245,28 @@ services:
       - RABBITMQ_CART_QUEUE=${RABBITMQ_CART_QUEUE:-cart_engagement}
     command: sh -lc "until php -r 'exit(@fsockopen(getenv(\"RABBITMQ_HOST\")?:\"rabbitmq\", (int)(getenv(\"RABBITMQ_PORT\")?:5672))?0:1);'; do echo 'waiting for rabbitmq...'; sleep 1; done; php artisan rabbitmq:consume-cart"
     restart: unless-stopped
+    networks:
+      - app_network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: library_laravel_phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - PMA_USER=${DB_USERNAME:-library}
+      - PMA_PASSWORD=${DB_PASSWORD:-secret}
+    ports:
+      - "8081:80"
+    networks:
+      - app_network
+
+volumes:
+  db_data:
+
+networks:
+  app_network:
+    driver: bridge

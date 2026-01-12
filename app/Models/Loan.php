@@ -5,6 +5,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\SoftDeletes;
+
+/**
+ * Book loan entity.
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property int $book_id
+ * @property \Carbon\Carbon|null $loan_date
+ * @property \Carbon\Carbon|null $return_date
+ * @property \Carbon\Carbon|null $returned_at
+ * @property-read string $status
+ * @property-read bool $is_overdue
+ * @property-read int|null $days_remaining
+ */
 class Loan extends Model
 {
     use HasFactory, SoftDeletes;
@@ -12,14 +26,23 @@ class Loan extends Model
     protected $hidden = ['created_at', 'updated_at'];
     protected $casts = ['loan_date' => 'date', 'return_date' => 'date', 'returned_at' => 'date'];
     protected $appends = ['status', 'is_overdue', 'days_remaining'];
+    /**
+     * Borrowing user (including soft deleted users).
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withTrashed();
     }
+    /**
+     * Borrowed book (including soft deleted books).
+     */
     public function book(): BelongsTo
     {
         return $this->belongsTo(Book::class)->withTrashed();
     }
+    /**
+     * Accessor for computed loan status.
+     */
     protected function status(): Attribute
     {
         return Attribute::get(function () {
@@ -32,6 +55,9 @@ class Loan extends Model
             return 'active';
         });
     }
+    /**
+     * Accessor that indicates whether the loan is overdue.
+     */
     protected function isOverdue(): Attribute
     {
         return Attribute::get(function () {
@@ -43,6 +69,9 @@ class Loan extends Model
             return $due->lt($today);
         });
     }
+    /**
+     * Accessor for the number of days remaining (or overdue) for the loan.
+     */
     protected function daysRemaining(): Attribute
     {
         return Attribute::get(function () {

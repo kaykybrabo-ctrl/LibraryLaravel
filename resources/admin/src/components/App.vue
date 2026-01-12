@@ -472,6 +472,17 @@ export default {
     UploadModal,
   },
 
+  created() {
+    if (typeof window !== 'undefined' && window.EventBus && typeof window.EventBus.$on === 'function') {
+      window.EventBus.$on('global-error', (payload) => {
+        const raw = payload && payload.message ? String(payload.message) : '';
+        const base = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
+        const msg = raw || base;
+        this.errorMessage = msg;
+      });
+    }
+  },
+
   mixins: [graphqlMixin, appCombinedMixin],
 
   data() {
@@ -579,6 +590,15 @@ export default {
         setTimeout(() => {
           if (this.successMessage === val) {
             this.successMessage = '';
+          }
+        }, 4000);
+      }
+    },
+    errorMessage(val) {
+      if (val && typeof val === 'string' && val.trim() && isBrowser) {
+        setTimeout(() => {
+          if (this.errorMessage === val) {
+            this.errorMessage = '';
           }
         }, 4000);
       }

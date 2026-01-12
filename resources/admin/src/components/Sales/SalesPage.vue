@@ -3,7 +3,9 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
       <h2>{{ $t('sales.title') }}</h2>
     </div>
-    <div v-if="adminOrdersLoading" class="text-center">{{ $t('sales.loading') }}</div>
+    <div v-if="adminOrdersLoading" class="text-center">
+      <LoadingSpinner :text="$t('sales.loading')" />
+    </div>
     <div v-else>
       <div v-if="adminOrders && adminOrders.length > 0">
         <div v-for="order in adminOrders" :key="order.id" style="padding: 12px 16px; background: white; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); border: 1px solid #e5e7eb;">

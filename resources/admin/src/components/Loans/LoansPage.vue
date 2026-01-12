@@ -3,7 +3,9 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
       <h2>{{ $t('loans.adminTitle') }}</h2>
     </div>
-    <div v-if="allLoansLoading" class="text-center">{{ $t('loans.loadingAdmin') }}</div>
+    <div v-if="allLoansLoading" class="text-center">
+      <LoadingSpinner :text="$t('loans.loadingAdmin')" />
+    </div>
     <div v-else>
       <div style="margin-bottom: 12px; max-width: 320px;">
         <select :value="adminLoansFilter" @change="$emit('update:admin-loans-filter', $event.target.value)" style="width:100%; padding:8px; border:1px solid #dee2e6; border-radius:6px;">
