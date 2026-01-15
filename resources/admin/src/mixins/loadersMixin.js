@@ -2,7 +2,6 @@ export default {
   methods: {
     async loadBooks() {
       try {
-        this.loading = true;
         if (typeof window !== 'undefined' && window.$uiStore) {
           window.$uiStore.setLoading('books', true);
         }
@@ -40,7 +39,6 @@ export default {
           this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
         }
       } finally {
-        this.loading = false;
         if (typeof window !== 'undefined' && window.$uiStore) {
           window.$uiStore.setLoading('books', false);
         }
@@ -49,7 +47,6 @@ export default {
 
     async loadAuthors() {
       try {
-        this.authorsLoading = true;
         if (typeof window !== 'undefined' && window.$uiStore) {
           window.$uiStore.setLoading('authors', true);
         }
@@ -63,7 +60,6 @@ export default {
           this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
         }
       } finally {
-        this.authorsLoading = false;
         if (typeof window !== 'undefined' && window.$uiStore) {
           window.$uiStore.setLoading('authors', false);
         }
@@ -72,7 +68,6 @@ export default {
 
     async loadAuthorsPage() {
       try {
-        this.authorsLoading = true;
         if (typeof window !== 'undefined' && window.$uiStore) {
           window.$uiStore.setLoading('authors', true);
         }
@@ -109,7 +104,6 @@ export default {
           this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
         }
       } finally {
-        this.authorsLoading = false;
         if (typeof window !== 'undefined' && window.$uiStore) {
           window.$uiStore.setLoading('authors', false);
         }
@@ -191,7 +185,6 @@ export default {
 
     async loadUsers() {
       try {
-        this.usersLoading = true;
         if (typeof window !== 'undefined' && window.$uiStore) {
           window.$uiStore.setLoading('users', true);
         }
@@ -206,7 +199,6 @@ export default {
           this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
         }
       } finally {
-        this.usersLoading = false;
         if (typeof window !== 'undefined' && window.$uiStore) {
           window.$uiStore.setLoading('users', false);
         }
@@ -215,7 +207,6 @@ export default {
 
     async loadAllLoans() {
       try {
-        this.allLoansLoading = true;
         if (typeof window !== 'undefined' && window.$uiStore) {
           window.$uiStore.setLoading('loans', true);
         }
@@ -229,7 +220,6 @@ export default {
           this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
         }
       } finally {
-        this.allLoansLoading = false;
         if (typeof window !== 'undefined' && window.$uiStore) {
           window.$uiStore.setLoading('loans', false);
         }
@@ -238,7 +228,6 @@ export default {
 
     async loadAdminOrders() {
       try {
-        this.adminOrdersLoading = true;
         if (typeof window !== 'undefined' && window.$uiStore) {
           window.$uiStore.setLoading('orders', true);
         }
@@ -252,7 +241,6 @@ export default {
           this.errorMessage = this.$t ? this.$t('errors.serverError') : 'Erro no servidor. Tente novamente.';
         }
       } finally {
-        this.adminOrdersLoading = false;
         if (typeof window !== 'undefined' && window.$uiStore) {
           window.$uiStore.setLoading('orders', false);
         }

@@ -8,6 +8,8 @@
         "php": "^8.2",
         "laravel/framework": "^11.0",
         "laravel/horizon": "^5.0",
+        "laravel/sail": "^1.26",
+        "nunomaduro/collision": "^8.1",
         "nuwave/lighthouse": "*",
         "php-amqplib/php-amqplib": "^3.7",
         "php-open-source-saver/jwt-auth": "*"
@@ -51,7 +53,10 @@
     },
     "extra": {
         "laravel": {
-            "dont-discover": []
+            "dont-discover": [
+                "laravel/sail",
+                "nunomaduro/collision"
+            ]
         }
     },
     "config": {

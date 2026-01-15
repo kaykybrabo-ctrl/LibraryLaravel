@@ -148,7 +148,7 @@
         :loading="!!globalLoadings.books"
         :adminBooksMode="adminBooksMode"
         :deletedBooks="deletedBooks"
-        :deletedBooksLoading="deletedBooksLoading"
+        :deletedBooksLoading="!!globalLoadings.deletedBooks"
         :deletedBooksSortKey.sync="deletedBooksSortKey"
         :searchQuery.sync="searchQuery"
         :authorFilterId.sync="authorFilterId"
@@ -182,7 +182,7 @@
         :currentUser="currentUser"
 
         :reviews="bookReviews"
-        :reviewsLoading="bookReviewsLoading"
+        :reviewsLoading="!!globalLoadings.bookReviews"
 
         :thumb="thumb"
         :getBookPrice="getBookPrice"
@@ -222,7 +222,7 @@
 
         :adminAuthorsMode="adminAuthorsMode"
         :deletedAuthors="deletedAuthors"
-        :deletedAuthorsLoading="deletedAuthorsLoading"
+        :deletedAuthorsLoading="!!globalLoadings.deletedAuthors"
         :deletedAuthorsSortKey.sync="deletedAuthorsSortKey"
 
         :authorsSearchQuery.sync="authorsSearchQuery"

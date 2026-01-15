@@ -5,11 +5,15 @@ export default {
         const id = bookId != null ? String(bookId) : '';
         if (!id) {
           this.bookReviews = [];
-          this.bookReviewsLoading = false;
+          if (typeof window !== 'undefined' && window.$uiStore) {
+            window.$uiStore.setLoading('bookReviews', false);
+          }
           return;
         }
 
-        this.bookReviewsLoading = true;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('bookReviews', true);
+        }
         const data = await this.graphql(
           'query ReviewsByBook($bookId: ID!) { reviewsByBook(book_id: $bookId) { id user_id book_id rating comment user { id name photo } } }',
           { bookId: id }
@@ -18,7 +22,9 @@ export default {
       } catch (e) {
         this.bookReviews = [];
       } finally {
-        this.bookReviewsLoading = false;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('bookReviews', false);
+        }
       }
     },
 

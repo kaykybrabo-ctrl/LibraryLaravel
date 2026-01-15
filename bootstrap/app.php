@@ -8,6 +8,14 @@ use App\Providers\AppServiceProvider;
 use PHPOpenSourceSaver\JWTAuth\Providers\LaravelServiceProvider as JWTServiceProvider;
 use Laravel\Horizon\HorizonServiceProvider;
 
+if (!class_exists(\NunoMaduro\Collision\Adapters\Laravel\CollisionServiceProvider::class)) {
+    class_alias(\App\Support\StubServiceProvider::class, \NunoMaduro\Collision\Adapters\Laravel\CollisionServiceProvider::class);
+}
+
+if (!class_exists(\Laravel\Sail\SailServiceProvider::class)) {
+    class_alias(\App\Support\StubServiceProvider::class, \Laravel\Sail\SailServiceProvider::class);
+}
+
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',

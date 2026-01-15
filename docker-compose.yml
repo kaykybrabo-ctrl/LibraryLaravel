@@ -17,6 +17,7 @@ services:
     env_file:
       - .env
     environment:
+      - APP_ENV=production
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES}
@@ -135,6 +136,7 @@ services:
       - /app/node_modules
       - /app/vendor
     environment:
+      - APP_ENV=production
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     command: sh -lc "php artisan horizon"
@@ -199,6 +201,7 @@ services:
       - /app/node_modules
       - /app/vendor
     environment:
+      - APP_ENV=production
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES}

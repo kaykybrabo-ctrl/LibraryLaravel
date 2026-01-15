@@ -19,9 +19,16 @@ export default {
     },
 
     async loadDeletedBooks() {
-      if (!this.currentUser || !this.currentUser.is_admin) return;
+      if (!this.currentUser || !this.currentUser.is_admin) {
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('deletedBooks', false);
+        }
+        return;
+      }
       try {
-        this.deletedBooksLoading = true;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('deletedBooks', true);
+        }
         const data = await this.graphql(
           'query DeletedBooks($sort: String) { deletedBooks(sort: $sort) { id title description photo price author { id name } } }',
           { sort: this.deletedBooksSortKey || 'recent' }
@@ -30,14 +37,23 @@ export default {
       } catch (e) {
         this.deletedBooks = [];
       } finally {
-        this.deletedBooksLoading = false;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('deletedBooks', false);
+        }
       }
     },
 
     async loadDeletedAuthors() {
-      if (!this.currentUser || !this.currentUser.is_admin) return;
+      if (!this.currentUser || !this.currentUser.is_admin) {
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('deletedAuthors', false);
+        }
+        return;
+      }
       try {
-        this.deletedAuthorsLoading = true;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('deletedAuthors', true);
+        }
         const data = await this.graphql(
           'query DeletedAuthors($sort: String) { deletedAuthors(sort: $sort) { id name bio photo books { id } } }',
           { sort: this.deletedAuthorsSortKey || 'recent' }
@@ -46,7 +62,9 @@ export default {
       } catch (e) {
         this.deletedAuthors = [];
       } finally {
-        this.deletedAuthorsLoading = false;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('deletedAuthors', false);
+        }
       }
     },
 

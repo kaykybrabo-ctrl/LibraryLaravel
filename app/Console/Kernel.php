@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Loan;
 use App\Models\CartItem;
 use App\Services\RabbitMQPublisher;
+use App\Jobs\SendBookDueNotification;
 class Kernel extends ConsoleKernel
 {
     protected function schedule(Schedule $schedule): void
@@ -22,6 +23,7 @@ class Kernel extends ConsoleKernel
                 try {
                     $queue = config('rabbitmq.queues.due', 'due_notifications');
                     $publisher = app(RabbitMQPublisher::class);
+
                     Loan::whereNull('returned_at')
                         ->whereDate('return_date', '=', $targetDate)
                         ->orderBy('id')
@@ -34,6 +36,8 @@ class Kernel extends ConsoleKernel
                                         'created_at' => now()->toIso8601String(),
                                         'days_ahead' => $days,
                                     ]);
+
+                                    SendBookDueNotification::dispatch((int) $loan->id);
                                 } catch (\Throwable $e) {
                                     Log::error('[schedule] failed to dispatch SendBookDueNotification', [
                                         'loan_id' => $loan->id,
@@ -55,8 +59,8 @@ class Kernel extends ConsoleKernel
                 }
             }
         })
-        ->dailyAt('14:15')
-        ->timezone(config('app.timezone', 'America/Sao_Paulo'))
+        ->dailyAt('13:00')
+        ->timezone('America/Sao_Paulo')
         ->description('Send due date notifications for books');
 
         $schedule->call(function () {
@@ -96,8 +100,8 @@ class Kernel extends ConsoleKernel
                 ]);
             }
         })
-        ->dailyAt('09:00')
-        ->timezone(config('app.timezone', 'America/Sao_Paulo'))
+        ->dailyAt('13:00')
+        ->timezone('America/Sao_Paulo')
         ->description('Send cart engagement emails');
     }
     protected function commands(): void

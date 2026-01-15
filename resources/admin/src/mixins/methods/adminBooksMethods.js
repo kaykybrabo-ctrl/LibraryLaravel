@@ -8,9 +8,16 @@ export default {
     },
 
     async loadDeletedBooks() {
-      if (!this.currentUser || !this.currentUser.is_admin) return;
+      if (!this.currentUser || !this.currentUser.is_admin) {
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('deletedBooks', false);
+        }
+        return;
+      }
       try {
-        this.deletedBooksLoading = true;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('deletedBooks', true);
+        }
         const data = await this.graphql(
           'query DeletedBooks { deletedBooks { id title description photo price author { id name } } }'
         );
@@ -18,7 +25,9 @@ export default {
       } catch (e) {
         this.deletedBooks = [];
       } finally {
-        this.deletedBooksLoading = false;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('deletedBooks', false);
+        }
       }
     },
 

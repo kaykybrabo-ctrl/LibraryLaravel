@@ -17,7 +17,9 @@ export default {
       this.selectedAuthor = null;
 
       this.bookReviews = [];
-      this.bookReviewsLoading = false;
+      if (typeof window !== 'undefined' && window.$uiStore) {
+        window.$uiStore.setLoading('bookReviews', false);
+      }
 
       this.adminBooksMode = 'active';
       this.adminAuthorsMode = 'active';
