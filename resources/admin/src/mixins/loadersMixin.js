@@ -73,6 +73,9 @@ export default {
     async loadAuthorsPage() {
       try {
         this.authorsLoading = true;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('authors', true);
+        }
         const data = await this.graphql(
           'query AuthorsPage($per: Int!, $page: Int, $search: String, $sort: String) { authorsPage(per_page: $per, page: $page, search: $search, sort: $sort) { data { id name bio photo books { id } } pageInfo { total perPage currentPage lastPage hasMorePages count } } }',
           {
@@ -107,6 +110,9 @@ export default {
         }
       } finally {
         this.authorsLoading = false;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('authors', false);
+        }
       }
     },
 
