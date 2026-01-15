@@ -1,7 +1,7 @@
 <template>
   <div>
     <h2>{{ $t('auth.register') }}</h2>
-    <form @submit.prevent="handleSubmit">
+    <form @submit.prevent="handleSubmit" novalidate>
       <div class="form-group">
         <label>{{ $t('auth.name') }}:</label>
         <input
@@ -202,6 +202,12 @@ export default {
       }
 
       if (this.localErrors.name || this.localErrors.email || this.localErrors.password || this.localErrors.password_confirmation) {
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          const msg = this.$t
+            ? this.$t('errors.registerFailed')
+            : 'Erro ao cadastrar. Verifique os campos.';
+          window.$uiStore.showToast('error', msg);
+        }
         return;
       }
 

@@ -7,7 +7,7 @@
       </div>
       <div class="modal-body">
         <div v-if="newBookError" class="error" style="margin-bottom:10px;">{{ newBookError }}</div>
-        <form @submit.prevent="handleSubmit" class="modal-form">
+        <form @submit.prevent="handleSubmit" class="modal-form" novalidate>
           <div class="form-group">
             <label>{{ $t('books.title') }}:</label>
             <input type="text" v-model="newBook.title" required>
@@ -198,6 +198,12 @@ export default {
         || this.localErrors.author
         || this.localErrors.price
       ) {
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          const msg = this.$t
+            ? this.$t('errors.validationFailed')
+            : 'Existem erros no formulário. Verifique os campos.';
+          window.$uiStore.showToast('error', msg);
+        }
         return;
       }
 

@@ -119,33 +119,7 @@ services:
     networks:
       - app_network
 
-  queue:
-    container_name: library_laravel_queue
-    build:
-      context: .
-      dockerfile: Dockerfile
-    depends_on:
-      - redis
-      - rabbitmq
-    env_file:
-      - .env
-    volumes:
-      - ./:/app
-      - /app/node_modules
-      - /app/vendor
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES}
-    command: sh -lc "php artisan queue:work --verbose --tries=3 --backoff=10 --sleep=1 --timeout=90"
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "ps aux | grep 'artisan queue:work' | grep -v grep >/dev/null || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    networks:
-      - app_network
+  
 
   horizon:
     container_name: library_laravel_horizon

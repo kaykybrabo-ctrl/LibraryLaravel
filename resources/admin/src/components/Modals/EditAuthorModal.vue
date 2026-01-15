@@ -6,7 +6,7 @@
         <button class="modal-close" @click="$emit('close')">&times;</button>
       </div>
       <div class="modal-body">
-        <form @submit.prevent="handleSubmit">
+        <form @submit.prevent="handleSubmit" novalidate>
           <div class="form-group">
             <label>{{ $t('auth.name') }}:</label>
             <input type="text" v-model="editAuthor.name" required>
@@ -81,6 +81,12 @@ export default {
       }
 
       if (this.localErrors.name || this.localErrors.bio) {
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          const msg = this.$t
+            ? this.$t('errors.validationFailed')
+            : 'Existem erros no formulário. Verifique os campos.';
+          window.$uiStore.showToast('error', msg);
+        }
         return;
       }
 

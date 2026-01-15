@@ -95,7 +95,7 @@
           :loginEmail.sync="loginEmail"
           :loginPassword.sync="loginPassword"
           :loginPasswordVisible.sync="loginPasswordVisible"
-          :loading="authLoading"
+          :loading="!!globalLoadings.auth"
           :fieldErrors="authFieldErrors"
           @submit="handleLogin"
           @openReset="openResetRequest"
@@ -112,7 +112,7 @@
           :resetNewPasswordConfirm.sync="resetNewPasswordConfirm"
           :resetPasswordVisible.sync="resetPasswordVisible"
           :resetPasswordConfirmVisible.sync="resetPasswordConfirmVisible"
-          :loading="authLoading"
+          :loading="!!globalLoadings.auth"
           :fieldErrors="authFieldErrors"
           @requestReset="handleRequestPasswordReset"
           @submitNewPassword="handleResetPassword"
@@ -127,7 +127,7 @@
           :registerPassword.sync="registerForm.password"
           :registerPasswordConfirmation.sync="registerForm.password_confirmation"
           :registerPasswordVisible.sync="registerPasswordVisible"
-          :loading="authLoading"
+          :loading="!!globalLoadings.auth"
           :fieldErrors="authFieldErrors"
           @submit="handleRegister"
           @showLogin="showRegister = false; resetAuthUiState()"
@@ -145,7 +145,7 @@
         v-else-if="routePage === 'books'"
         :currentUser="currentUser"
         :authors="authors"
-        :loading="loading"
+        :loading="!!globalLoadings.books"
         :adminBooksMode="adminBooksMode"
         :deletedBooks="deletedBooks"
         :deletedBooksLoading="deletedBooksLoading"
@@ -218,7 +218,7 @@
       <authors-page
         v-else-if="routePage === 'authors'"
         :currentUser="currentUser"
-        :authorsLoading="authorsLoading"
+        :authorsLoading="!!globalLoadings.authors"
 
         :adminAuthorsMode="adminAuthorsMode"
         :deletedAuthors="deletedAuthors"
@@ -254,7 +254,7 @@
 
       <users-page
         v-else-if="routePage === 'users' && currentUser && currentUser.is_admin"
-        :users-loading="usersLoading"
+        :users-loading="!!globalLoadings.users"
         :paginated-users="paginatedUsers"
         :total-users-pages="totalUsersPages"
         :users-page="usersPage"
@@ -276,7 +276,7 @@
 
       <loans-page
         v-else-if="routePage === 'loans' && currentUser && currentUser.is_admin"
-        :all-loans-loading="allLoansLoading"
+        :all-loans-loading="!!globalLoadings.loans"
         :admin-loans-filter="adminLoansFilter"
         :filtered-admin-loans="filteredAdminLoans"
         :format-date="formatDate"
@@ -288,7 +288,7 @@
 
       <sales-page
         v-else-if="routePage === 'sales' && currentUser && currentUser.is_admin"
-        :admin-orders-loading="adminOrdersLoading"
+        :admin-orders-loading="!!globalLoadings.orders"
         :admin-orders="adminOrders"
         :format-date="formatDate"
         :format-order-status="formatOrderStatus"

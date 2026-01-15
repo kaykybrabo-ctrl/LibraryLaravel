@@ -58,14 +58,28 @@ export default {
     },
 
     handleAuthError(e) {
+      const code = e && e.code ? String(e.code) : '';
+
+      if (code === 'invalid_credentials') {
+        const msg = this.$t
+          ? this.$t('errors.invalidCredentials')
+          : (e && e.message) || 'Credenciais inválidas.';
+
+        this.authFieldErrors = { email: [msg] };
+        this.errorMessage = msg;
+        this.successMessage = '';
+        return;
+      }
+
       this.authFieldErrors = this.extractAuthFieldErrors(e);
       this.errorMessage = this.getAuthErrorMessage(e);
       this.successMessage = '';
     },
 
     async handleLogin() {
-      if (this.authLoading) return;
-      this.authLoading = true;
+      if (typeof window !== 'undefined' && window.$uiStore) {
+        window.$uiStore.setLoading('auth', true);
+      }
       try {
         this.resetAuthUiState();
 
@@ -104,12 +118,16 @@ export default {
       } catch (e) {
         this.handleAuthError(e);
       } finally {
-        this.authLoading = false;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('auth', false);
+        }
       }
     },
 
     async handleRegister() {
-      if (this.authLoading) return;
+      if (typeof window !== 'undefined' && window.$uiStore) {
+        window.$uiStore.setLoading('auth', true);
+      }
       try {
         this.resetAuthUiState();
 
@@ -118,9 +136,6 @@ export default {
           this.authFieldErrors = { password_confirmation: [this.errorMessage] };
           return;
         }
-
-        this.authLoading = true;
-
         const data = await this.graphql(
           'mutation Register($input: RegisterInput!) { register(input: $input) { message } }',
           {
@@ -149,14 +164,13 @@ export default {
         }
       } catch (e) {
         this.handleAuthError(e);
-      } finally {
-        this.authLoading = false;
       }
     },
 
     async handleRequestPasswordReset() {
-      if (this.authLoading) return;
-      this.authLoading = true;
+      if (typeof window !== 'undefined' && window.$uiStore) {
+        window.$uiStore.setLoading('auth', true);
+      }
       try {
         this.resetAuthUiState();
 
@@ -180,14 +194,13 @@ export default {
         }
       } catch (e) {
         this.handleAuthError(e);
-      } finally {
-        this.authLoading = false;
       }
     },
 
     async handleResetPassword() {
-      if (this.authLoading) return;
-      this.authLoading = true;
+      if (typeof window !== 'undefined' && window.$uiStore) {
+        window.$uiStore.setLoading('auth', true);
+      }
       try {
         this.resetAuthUiState();
 
@@ -230,8 +243,6 @@ export default {
         }
       } catch (e) {
         this.handleAuthError(e);
-      } finally {
-        this.authLoading = false;
       }
     },
 

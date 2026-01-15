@@ -3,10 +3,8 @@ namespace App\Console;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 use App\Models\Loan;
 use App\Models\CartItem;
-use App\Jobs\SendCartEngagementEmail;
 use App\Services\RabbitMQPublisher;
 class Kernel extends ConsoleKernel
 {
@@ -101,18 +99,6 @@ class Kernel extends ConsoleKernel
         ->dailyAt('09:00')
         ->timezone(config('app.timezone', 'America/Sao_Paulo'))
         ->description('Send cart engagement emails');
-        $schedule->command('queue:work --tries=3 --timeout=60 --sleep=3 --max-time=3600')
-            ->everyMinute()
-            ->withoutOverlapping()
-            ->runInBackground()
-            ->timezone(config('app.timezone', 'America/Sao_Paulo'))
-            ->description('Process queue jobs');
-        $schedule->command('queue:retry all')
-            ->hourly()
-            ->withoutOverlapping()
-            ->runInBackground()
-            ->timezone(config('app.timezone', 'America/Sao_Paulo'))
-            ->description('Retry failed queue jobs');
     }
     protected function commands(): void
     {

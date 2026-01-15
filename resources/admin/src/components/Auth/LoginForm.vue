@@ -1,7 +1,7 @@
 <template>
   <div>
     <h2>{{ $t('auth.loginHeading') }}</h2>
-    <form @submit.prevent="handleSubmit">
+    <form @submit.prevent="handleSubmit" novalidate>
       <div class="form-group">
         <label>{{ $t('auth.email') }}:</label>
         <input
@@ -132,6 +132,12 @@ export default {
       }
 
       if (this.localErrors.email || this.localErrors.password) {
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          const msg = this.$t
+            ? this.$t('errors.loginFailed')
+            : 'Erro ao fazer login. Verifique os campos.';
+          window.$uiStore.showToast('error', msg);
+        }
         return;
       }
 

@@ -88,6 +88,11 @@ export default {
   'errors.onlyJpgPngAllowed': 'Apenas JPG/PNG são permitidos.',
   'errors.titleAndAuthorRequired': 'Título e autor são obrigatórios.',
   'errors.bookCreateError': 'Erro ao criar livro.',
+  'errors.passwordResetFailed': 'Não foi possível redefinir a senha. Verifique os campos.',
+  'errors.validationFailed': 'Existem erros no formulário. Verifique os campos destacados.',
+  'errors.genericError': 'Erro genérico.',
+  'errors.numericError': 'Valor inválido.',
+  'errors.confirmedError': 'As senhas não conferem.',
   
   'nav.books': 'Livros',
   'nav.authors': 'Autores',
@@ -241,6 +246,11 @@ export default {
   'form.maxLength': 'Máximo de {max} caracteres',
 
   'forms.required': 'Campo obrigatório',
+  'validation.required': 'Campo obrigatório',
+  'validation.email': 'E-mail inválido',
+  'validation.numeric': 'Valor inválido',
+  'validation.min.numeric': 'Valor não pode ser negativo',
+  'validation.confirmed': 'As senhas não conferem',
   
   'common.loading': 'Carregando...',
   'common.sending': 'Enviando...',

@@ -3,7 +3,7 @@ use PHPOpenSourceSaver\JWTAuth\Providers\JWT\Lcobucci;
 use PHPOpenSourceSaver\JWTAuth\Providers\Auth\Illuminate as AuthIlluminate;
 use PHPOpenSourceSaver\JWTAuth\Providers\Storage\Illuminate as StorageIlluminate;
 return [
-    'secret' => env('JWT_SECRET', 'dev-secret-key'),
+    'secret' => env('JWT_SECRET'),
     'keys' => [
         'public' => env('JWT_PUBLIC_KEY'),
         'private' => env('JWT_PRIVATE_KEY'),

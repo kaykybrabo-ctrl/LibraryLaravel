@@ -3,7 +3,7 @@
     <h2 v-if="!resetToken">{{ $t('auth.recoverPasswordTitle') }}</h2>
     <h2 v-else>{{ $t('auth.setNewPasswordTitle') }}</h2>
 
-    <form v-if="!resetToken" @submit.prevent="handleRequestReset">
+    <form v-if="!resetToken" @submit.prevent="handleRequestReset" novalidate>
       <div class="form-group">
         <label>{{ $t('auth.registeredEmail') }}:</label>
         <input
@@ -37,7 +37,7 @@
       </button>
     </form>
 
-    <form v-else @submit.prevent="handleSubmitNewPassword">
+    <form v-else @submit.prevent="handleSubmitNewPassword" novalidate>
       <p style="margin-bottom:10px; font-size:0.9rem; color:#555;">
         {{ $t('auth.email') }}: <strong>{{ resetEmail }}</strong>
       </p>
@@ -185,6 +185,12 @@ export default {
       }
 
       if (this.localErrors.email) {
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          const msg = this.$t
+            ? this.$t('errors.validationFailed')
+            : 'Existem erros no formulário. Verifique os campos.';
+          window.$uiStore.showToast('error', msg);
+        }
         return;
       }
 
@@ -210,6 +216,12 @@ export default {
       }
 
       if (this.localErrors.password || this.localErrors.password_confirmation) {
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          const msg = this.$t
+            ? this.$t('errors.passwordResetFailed')
+            : 'Não foi possível redefinir a senha. Verifique os campos.';
+          window.$uiStore.showToast('error', msg);
+        }
         return;
       }
 

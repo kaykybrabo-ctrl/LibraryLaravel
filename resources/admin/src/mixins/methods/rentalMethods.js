@@ -16,6 +16,9 @@ export default {
     async confirmRent() {
       if (!this.rentTargetBook || !this.rentReturnDate) return;
       try {
+        this.errorMessage = '';
+        this.successMessage = '';
+
         const loanDate = new Date().toISOString().slice(0, 10);
         await this.graphql(
           'mutation RentBook($input: RentBookInput!) { rentBook(input: $input) { id } }',
@@ -28,11 +31,16 @@ export default {
             },
           }
         );
+
         await this.loadUserLoans();
         await this.loadActiveBookIds();
         await this.loadBooks();
         this.closeRentModal();
+        this.successMessage = this.$t('messages.bookRented');
       } catch (e) {
+        const msg = e && e.message ? String(e.message).trim() : (this.$t && this.$t('errors.serverError'));
+        this.errorMessage = msg || (this.$t ? this.$t('errors.serverError') : 'Erro ao alugar o livro.');
+        this.successMessage = '';
       }
     },
 

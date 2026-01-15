@@ -7,8 +7,6 @@ export default {
       routePage: 'home',
       successMessage: '',
       errorMessage: '',
-
-      authLoading: false,
       authFieldErrors: {},
       
       showRegister: false,

@@ -6,7 +6,6 @@ use App\Http\Requests\LoanRequest;
 use App\Models\Book;
 use App\Models\Loan;
 use App\Models\User;
-use App\Jobs\SendBookDueNotification;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
