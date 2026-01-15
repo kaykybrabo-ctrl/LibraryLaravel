@@ -41,18 +41,6 @@ class LoanService
             }
 
             $loan = Loan::create($data);
-
-            try {
-                SendBookDueNotification::dispatch($loan->id);
-            } catch (\Throwable $e) {
-                Log::warning('Failed to dispatch SendBookDueNotification from LoanService::rentBook', [
-                    'loan_id' => (int) $loan->id,
-                    'user_id' => (int) $user->id,
-                    'is_admin' => $isAdmin = (bool) ($user->is_admin ?? false),
-                    'error' => $e->getMessage(),
-                ]);
-            }
-
             return $loan;
         });
 

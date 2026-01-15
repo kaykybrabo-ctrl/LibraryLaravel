@@ -2,6 +2,7 @@
 namespace App\Providers;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use Laravel\Horizon\Horizon;
 class AuthServiceProvider extends ServiceProvider
 {
     protected $policies = [
@@ -12,8 +13,13 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerPolicies();
+
         Gate::define('admin', function ($user) {
             return (bool) ($user->is_admin ?? false);
+        });
+
+        Horizon::auth(function ($request) {
+            return true;
         });
     }
 }

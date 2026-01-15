@@ -13,44 +13,51 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->call(function () {
-            $targetDate = now()->addDay()->toDateString();
-            Log::info('[schedule] due-loans dispatch start', [
-                'target_date' => $targetDate,
-                'timezone' => config('app.timezone', 'UTC')
-            ]);
-            try {
-                $queue = config('rabbitmq.queues.due', 'due_notifications');
-                $publisher = app(RabbitMQPublisher::class);
-                Loan::whereNull('returned_at')
-                    ->whereDate('return_date', '=', $targetDate)
-                    ->orderBy('id')
-                    ->chunk(100, function ($loans) use ($publisher, $queue) {
-                        foreach ($loans as $loan) {
-                            try {
-                                $publisher->publish($queue, [
-                                    'loan_id' => $loan->id,
-                                    'retries' => 0,
-                                    'created_at' => now()->toIso8601String(),
-                                ]);
-                            } catch (\Throwable $e) {
-                                Log::error('[schedule] failed to dispatch SendBookDueNotification', [
-                                    'loan_id' => $loan->id,
-                                    'error' => $e->getMessage(),
-                                    'trace' => $e->getTraceAsString()
-                                ]);
-                            }
-                        }
-                    });
-                Log::info('[schedule] due-loans dispatch end', ['target_date' => $targetDate]);
-            } catch (\Throwable $e) {
-                Log::error('[schedule] due-loans failed', [
+            $daysAhead = [2, 1];
+            foreach ($daysAhead as $days) {
+                $targetDate = now()->addDays($days)->toDateString();
+                Log::info('[schedule] due-loans dispatch start', [
                     'target_date' => $targetDate,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
+                    'days_ahead' => $days,
+                    'timezone' => config('app.timezone', 'UTC')
                 ]);
+                try {
+                    $queue = config('rabbitmq.queues.due', 'due_notifications');
+                    $publisher = app(RabbitMQPublisher::class);
+                    Loan::whereNull('returned_at')
+                        ->whereDate('return_date', '=', $targetDate)
+                        ->orderBy('id')
+                        ->chunk(100, function ($loans) use ($publisher, $queue, $days) {
+                            foreach ($loans as $loan) {
+                                try {
+                                    $publisher->publish($queue, [
+                                        'loan_id' => $loan->id,
+                                        'retries' => 0,
+                                        'created_at' => now()->toIso8601String(),
+                                        'days_ahead' => $days,
+                                    ]);
+                                } catch (\Throwable $e) {
+                                    Log::error('[schedule] failed to dispatch SendBookDueNotification', [
+                                        'loan_id' => $loan->id,
+                                        'days_ahead' => $days,
+                                        'error' => $e->getMessage(),
+                                        'trace' => $e->getTraceAsString()
+                                    ]);
+                                }
+                            }
+                        });
+                    Log::info('[schedule] due-loans dispatch end', ['target_date' => $targetDate, 'days_ahead' => $days]);
+                } catch (\Throwable $e) {
+                    Log::error('[schedule] due-loans failed', [
+                        'target_date' => $targetDate,
+                        'days_ahead' => $days,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
             }
         })
-        ->dailyAt('08:00')
+        ->dailyAt('14:15')
         ->timezone(config('app.timezone', 'America/Sao_Paulo'))
         ->description('Send due date notifications for books');
 

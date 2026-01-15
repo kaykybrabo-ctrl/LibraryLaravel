@@ -19,9 +19,9 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
-      - ALWAYS_FRESH=${ALWAYS_FRESH:-false}
-      - SEED_ON_BOOT=${SEED_ON_BOOT:-true}
+      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES}
+      - ALWAYS_FRESH=${ALWAYS_FRESH}
+      - SEED_ON_BOOT=${SEED_ON_BOOT}
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "php -v > /dev/null 2>&1 || exit 1"]
@@ -36,10 +36,10 @@ services:
     container_name: library_laravel_mysql
     restart: unless-stopped
     environment:
-      - MYSQL_DATABASE=${DB_DATABASE:-library}
-      - MYSQL_USER=${DB_USERNAME:-library}
-      - MYSQL_PASSWORD=${DB_PASSWORD:-secret}
-      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-root}
+      - MYSQL_DATABASE=${DB_DATABASE}
+      - MYSQL_USER=${DB_USERNAME}
+      - MYSQL_PASSWORD=${DB_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
@@ -61,6 +61,11 @@ services:
       - "5173:5173"
     command: sh -lc "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "node -v > /dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - app_network
 
@@ -87,6 +92,11 @@ services:
       - "8025:8025"
       - "1025:1025"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8025"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - app_network
 
@@ -97,9 +107,9 @@ services:
       - "5672:5672"
       - "15672:15672"
     environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-guest}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-guest}
-      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_VHOST:-/}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+      - RABBITMQ_DEFAULT_VHOST=${RABBITMQ_VHOST}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
@@ -126,9 +136,40 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
+      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES}
     command: sh -lc "php artisan queue:work --verbose --tries=3 --backoff=10 --sleep=1 --timeout=90"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep 'artisan queue:work' | grep -v grep >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+
+  horizon:
+    container_name: library_laravel_horizon
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - redis
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+      - /app/node_modules
+      - /app/vendor
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    command: sh -lc "php artisan horizon"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep 'artisan horizon' | grep -v grep >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - app_network
 
@@ -149,20 +190,25 @@ services:
     env_file:
       - .env
     environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
-      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
-      - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
-      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
-      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
-      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
-      - RABBITMQ_DUE_QUEUE=${RABBITMQ_DUE_QUEUE:-due_notifications}
-      - RABBITMQ_CART_QUEUE=${RABBITMQ_CART_QUEUE:-cart_engagement}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES}
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST}
+      - RABBITMQ_DUE_QUEUE=${RABBITMQ_DUE_QUEUE}
+      - RABBITMQ_CART_QUEUE=${RABBITMQ_CART_QUEUE}
     entrypoint: ["sh", "-lc"]
     command: ["php -v"]
     networks:
       - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "php -v > /dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   scheduler:
     container_name: library_laravel_scheduler
@@ -181,9 +227,14 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
+      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES}
     command: sh -lc "php artisan schedule:work"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep 'artisan schedule:work' | grep -v grep >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - app_network
 
@@ -202,20 +253,25 @@ services:
       - /app/node_modules
       - /app/vendor
     environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
-      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
-      - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
-      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
-      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
-      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
-      - RABBITMQ_DUE_QUEUE=${RABBITMQ_DUE_QUEUE:-due_notifications}
-      - RABBITMQ_CART_QUEUE=${RABBITMQ_CART_QUEUE:-cart_engagement}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES}
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST}
+      - RABBITMQ_DUE_QUEUE=${RABBITMQ_DUE_QUEUE}
+      - RABBITMQ_CART_QUEUE=${RABBITMQ_CART_QUEUE}
     command: sh -lc "until php -r 'exit(@fsockopen(getenv(\"RABBITMQ_HOST\")?:\"rabbitmq\", (int)(getenv(\"RABBITMQ_PORT\")?:5672))?0:1);'; do echo 'waiting for rabbitmq...'; sleep 1; done; php artisan rabbitmq:consume-due"
     restart: unless-stopped
     networks:
       - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep 'rabbitmq:consume-due' | grep -v grep >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   rabbitmq_cart_consumer:
     container_name: library_laravel_rabbitmq_cart_consumer
@@ -232,21 +288,26 @@ services:
       - /app/node_modules
       - /app/vendor
     environment:
-      - DB_DATABASE=/app/database/database.sqlite
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES:-30}
-      - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
-      - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
-      - RABBITMQ_USER=${RABBITMQ_USER:-guest}
-      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
-      - RABBITMQ_VHOST=${RABBITMQ_VHOST:-/}
-      - RABBITMQ_DUE_QUEUE=${RABBITMQ_DUE_QUEUE:-due_notifications}
-      - RABBITMQ_CART_QUEUE=${RABBITMQ_CART_QUEUE:-cart_engagement}
+      - DB_DATABASE=${DB_DATABASE}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - CART_ENGAGEMENT_COOLDOWN_MINUTES=${CART_ENGAGEMENT_COOLDOWN_MINUTES}
+      - RABBITMQ_HOST=${RABBITMQ_HOST}
+      - RABBITMQ_PORT=${RABBITMQ_PORT}
+      - RABBITMQ_USER=${RABBITMQ_USER}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+      - RABBITMQ_VHOST=${RABBITMQ_VHOST}
+      - RABBITMQ_DUE_QUEUE=${RABBITMQ_DUE_QUEUE}
+      - RABBITMQ_CART_QUEUE=${RABBITMQ_CART_QUEUE}
     command: sh -lc "until php -r 'exit(@fsockopen(getenv(\"RABBITMQ_HOST\")?:\"rabbitmq\", (int)(getenv(\"RABBITMQ_PORT\")?:5672))?0:1);'; do echo 'waiting for rabbitmq...'; sleep 1; done; php artisan rabbitmq:consume-cart"
     restart: unless-stopped
     networks:
       - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep 'rabbitmq:consume-cart' | grep -v grep >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -257,12 +318,17 @@ services:
     environment:
       - PMA_HOST=mysql
       - PMA_PORT=3306
-      - PMA_USER=${DB_USERNAME:-library}
-      - PMA_PASSWORD=${DB_PASSWORD:-secret}
+      - PMA_USER=${DB_USERNAME}
+      - PMA_PASSWORD=${DB_PASSWORD}
     ports:
       - "8081:80"
     networks:
       - app_network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80 >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   db_data:

@@ -501,6 +501,7 @@ export default {
         bio: '',
         photo: '',
       },
+      globalLoadings: {},
     };
   },
 
@@ -928,6 +929,24 @@ export default {
     }
 
     window.addEventListener('hashchange', () => this.handleRouteHash());
+
+    if (window.EventBus && typeof window.EventBus.$on === 'function') {
+      window.EventBus.$on('ui:set-loading', ({ key, value }) => {
+        if (!key) return;
+        this.$set(this.globalLoadings, key, !!value);
+      });
+
+      window.EventBus.$on('ui:toast', ({ type, message }) => {
+        const normalized = typeof message === 'string' ? message : '';
+        if (!normalized.trim()) return;
+
+        if (type === 'success') {
+          this.successMessage = normalized;
+        } else {
+          this.errorMessage = normalized;
+        }
+      });
+    }
   },
 };
 </script>

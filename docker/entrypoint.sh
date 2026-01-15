@@ -17,7 +17,7 @@ chmod -R 777 /app/storage /app/bootstrap/cache || true
 
 git config --global --add safe.directory /app >/dev/null 2>&1 || true
 
-if [ ! -f /app/vendor/autoload.php ] || [ ! -d /app/vendor/php-amqplib/php-amqplib ]; then
+if [ ! -f /app/vendor/autoload.php ] || [ ! -d /app/vendor/php-amqplib/php-amqplib ] || [ ! -d /app/vendor/laravel/horizon ]; then
   composer clear-cache || true
   composer install --no-dev --no-interaction --prefer-source --optimize-autoloader || true
 fi

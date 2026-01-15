@@ -1,13 +1,11 @@
 <?php
 use App\GraphQL\Mutations\LibraryMutation;
-use App\Jobs\SendBookDueNotification;
 use App\Models\Book;
 use App\Models\Loan;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Bus;
-it('creates a loan and dispatches notification job when renting a book', function () {
-    Bus::fake();
+it('creates a loan when renting a book', function () {
     $user = User::factory()->create([
         'is_admin' => false,
     ]);
@@ -25,7 +23,4 @@ it('creates a loan and dispatches notification job when renting a book', functio
     expect($loan)->toBeInstanceOf(Loan::class);
     expect($loan->user_id)->toBe($user->id);
     expect($loan->book_id)->toBe($book->id);
-    Bus::assertDispatched(SendBookDueNotification::class, function ($job) use ($loan) {
-        return $job->loanId === $loan->id;
-    });
 });

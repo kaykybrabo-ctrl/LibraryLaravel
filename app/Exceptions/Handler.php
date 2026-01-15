@@ -29,6 +29,7 @@ class Handler extends ExceptionHandler
     }
     public function render($request, Throwable $exception): JsonResponse|\Illuminate\Http\Response
     {
+        // Mantém comportamento padrão (Lighthouse já devolve erros estruturados para o frontend)
         return parent::render($request, $exception);
     }
 }

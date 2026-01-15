@@ -3,6 +3,9 @@ export default {
     async loadBooks() {
       try {
         this.loading = true;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('books', true);
+        }
         const data = await this.graphql(
           'query BooksPage($per: Int!, $page: Int, $search: String, $authorId: ID, $sort: String) { booksPage(per_page: $per, page: $page, search: $search, author_id: $authorId, sort: $sort) { data { id title description photo price created_at author { id name bio photo } } pageInfo { total perPage currentPage lastPage hasMorePages count } } }',
           {
@@ -38,12 +41,18 @@ export default {
         }
       } finally {
         this.loading = false;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('books', false);
+        }
       }
     },
 
     async loadAuthors() {
       try {
         this.authorsLoading = true;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('authors', true);
+        }
         const data = await this.graphql(
           'query Authors { authors { id name } }',
         );
@@ -55,6 +64,9 @@ export default {
         }
       } finally {
         this.authorsLoading = false;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('authors', false);
+        }
       }
     },
 
@@ -174,6 +186,9 @@ export default {
     async loadUsers() {
       try {
         this.usersLoading = true;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('users', true);
+        }
         const data = await this.graphql(
           'query Users($per: Int) { users(per_page: $per) { id name email is_admin photo } }',
           { per: 100 },
@@ -186,12 +201,18 @@ export default {
         }
       } finally {
         this.usersLoading = false;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('users', false);
+        }
       }
     },
 
     async loadAllLoans() {
       try {
         this.allLoansLoading = true;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('loans', true);
+        }
         const data = await this.graphql(
           'query Loans { loans { id user_id book_id loan_date return_date returned_at status is_overdue days_remaining user { id name email is_admin photo } book { id title author { id name } } } }',
         );
@@ -203,12 +224,18 @@ export default {
         }
       } finally {
         this.allLoansLoading = false;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('loans', false);
+        }
       }
     },
 
     async loadAdminOrders() {
       try {
         this.adminOrdersLoading = true;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('orders', true);
+        }
         const data = await this.graphql(
           'query Orders { orders { id user_id total status created_at user { id name email } items { id book_id quantity unit_price book { id title author { id name } } } } }',
         );
@@ -220,6 +247,9 @@ export default {
         }
       } finally {
         this.adminOrdersLoading = false;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('orders', false);
+        }
       }
     },
 

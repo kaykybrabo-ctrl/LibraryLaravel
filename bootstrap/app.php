@@ -6,6 +6,7 @@ use Illuminate\Contracts\Console\Kernel as ConsoleKernelContract;
 use App\Providers\AuthServiceProvider;
 use App\Providers\AppServiceProvider;
 use PHPOpenSourceSaver\JWTAuth\Providers\LaravelServiceProvider as JWTServiceProvider;
+use Laravel\Horizon\HorizonServiceProvider;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -19,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         AuthServiceProvider::class,
         AppServiceProvider::class,
         JWTServiceProvider::class,
+        HorizonServiceProvider::class,
     ])
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([

@@ -19,6 +19,18 @@ Vue.component('ConfirmModal', ConfirmModal);
 const eventBus = new Vue();
 window.EventBus = eventBus;
 
+// Global UI state helpers (loading + toasts) centralizados via EventBus
+window.$uiStore = {
+  setLoading(key, value) {
+    if (!key) return;
+    eventBus.$emit('ui:set-loading', { key, value: !!value });
+  },
+  showToast(type, message) {
+    if (!message) return;
+    eventBus.$emit('ui:toast', { type, message: String(message) });
+  },
+};
+
 window.axios = axios;
 
 Vue.config.errorHandler = (err, vm, info) => {
