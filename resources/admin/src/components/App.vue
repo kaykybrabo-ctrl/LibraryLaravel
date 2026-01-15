@@ -408,6 +408,7 @@
 
     <upload-modal
       :show="showUploadModal"
+      :loading="!!globalLoadings.upload"
       @close="closeUploadModal"
       @uploaded="handleUploadSuccess"
     />

@@ -16,7 +16,7 @@
             <img :src="preview" :alt="$t('modals.uploadImage.previewAlt')" style="max-width:200px; max-height:200px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
           </div>
         </div>
-        <div v-if="uploading" style="margin-top:12px; color:#666;">
+        <div v-if="loading" style="margin-top:12px; color:#666;">
           <span>{{ $t('common.sending') }}</span>
         </div>
         <div v-if="error" style="margin-top:12px; color:#d9534f;">
@@ -24,8 +24,8 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="btn" @click="upload" :disabled="!selectedFile || uploading">{{ $t('common.send') }}</button>
-        <button class="btn btn-secondary" @click="$emit('close')" :disabled="uploading">{{ $t('common.cancel') }}</button>
+        <button class="btn" @click="upload" :disabled="!selectedFile || loading">{{ $t('common.send') }}</button>
+        <button class="btn btn-secondary" @click="$emit('close')" :disabled="loading">{{ $t('common.cancel') }}</button>
       </div>
     </div>
   </div>
@@ -36,12 +36,12 @@ export default {
   name: 'UploadModal',
   props: {
     show: Boolean,
+    loading: { type: Boolean, default: false },
   },
   data() {
     return {
       selectedFile: null,
       preview: null,
-      uploading: false,
       error: null,
     };
   },
@@ -71,8 +71,10 @@ export default {
     },
     async upload() {
       if (!this.selectedFile) return;
-      this.uploading = true;
       this.error = null;
+      if (typeof window !== 'undefined' && window.$uiStore) {
+        window.$uiStore.setLoading('upload', true);
+      }
       try {
         const fileData = await new Promise((resolve, reject) => {
           const reader = new FileReader();
@@ -107,7 +109,9 @@ export default {
       } catch (err) {
         this.error = err.message || this.$t('errors.imageUploadFailed');
       } finally {
-        this.uploading = false;
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('upload', false);
+        }
       }
     },
   },

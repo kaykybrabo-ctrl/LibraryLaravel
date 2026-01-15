@@ -166,6 +166,10 @@ export default {
         }
       } catch (e) {
         this.handleAuthError(e);
+      } finally {
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('auth', false);
+        }
       }
     },
 
@@ -196,6 +200,10 @@ export default {
         }
       } catch (e) {
         this.handleAuthError(e);
+      } finally {
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('auth', false);
+        }
       }
     },
 
@@ -245,6 +253,10 @@ export default {
         }
       } catch (e) {
         this.handleAuthError(e);
+      } finally {
+        if (typeof window !== 'undefined' && window.$uiStore) {
+          window.$uiStore.setLoading('auth', false);
+        }
       }
     },
 
